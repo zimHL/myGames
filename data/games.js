@@ -1,4 +1,4 @@
-window.GAME_LIST = Object.freeze([
+﻿window.GAME_LIST = Object.freeze([
     {
         id: "sudoku",
         title: "数独训练",
@@ -18,5 +18,15 @@ window.GAME_LIST = Object.freeze([
         difficulty: "轻量策略",
         age: "建议 4+",
         tags: ["规则理解", "回合判断", "策略启蒙"]
+    },
+    {
+        id: "memory-match",
+        title: "记忆翻牌",
+        summary: "翻开两张一样的卡片并完成配对，适合练习短时记忆和专注观察。",
+        href: "./games/memory-match/index.html",
+        status: "已接入",
+        difficulty: "多难度",
+        age: "建议 4+",
+        tags: ["记忆训练", "专注观察", "配对能力"]
     }
 ]);

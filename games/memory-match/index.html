@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>记忆翻牌</title>
+    <style>
+        :root {
+            --bg: #f4efe4;
+            --card: rgba(255, 251, 243, 0.92);
+            --card-soft: #fff7ea;
+            --line: rgba(34, 50, 56, 0.12);
+            --text: #223238;
+            --muted: #647379;
+            --accent: #0f766e;
+            --accent-strong: #0b5b55;
+            --warm: #c67a20;
+            --shadow: 0 24px 48px rgba(34, 50, 56, 0.14);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            min-height: 100%;
+        }
+
+        body {
+            padding: 20px;
+            font-family: "Trebuchet MS", "Avenir Next", "Microsoft YaHei", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(198, 122, 32, 0.14), transparent 24%),
+                radial-gradient(circle at right 18% top 12%, rgba(15, 118, 110, 0.15), transparent 22%),
+                linear-gradient(180deg, #f8f4ea 0%, var(--bg) 52%, #efe6d1 100%);
+        }
+
+        .page {
+            width: min(100%, 760px);
+            margin: 0 auto;
+        }
+
+        .card {
+            border: 1px solid var(--line);
+            border-radius: 30px;
+            background: var(--card);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(12px);
+            padding: 24px;
+        }
+
+        .home-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 38px;
+            padding: 0 14px;
+            border-radius: 999px;
+            background: #eef5f4;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        .home-link:hover {
+            background: #e2f0ee;
+        }
+
+        .header {
+            margin-top: 18px;
+        }
+
+        .eyebrow {
+            margin: 0 0 10px;
+            color: var(--accent);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        h1,
+        p {
+            margin: 0;
+        }
+
+        h1 {
+            font-size: clamp(2.3rem, 6vw, 3.2rem);
+            line-height: 0.95;
+            letter-spacing: -0.05em;
+        }
+
+        .intro {
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 1rem;
+            line-height: 1.75;
+            max-width: 38rem;
+        }
+
+        .toolbar {
+            margin-top: 20px;
+            padding: 18px;
+            border-radius: 24px;
+            background: var(--card-soft);
+            border: 1px solid rgba(34, 50, 56, 0.08);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 180px;
+            flex: 1;
+        }
+
+        .field label {
+            color: var(--muted);
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        select,
+        button {
+            border: none;
+            font: inherit;
+        }
+
+        select {
+            min-height: 46px;
+            padding: 0 14px;
+            border-radius: 14px;
+            background: #fffdf8;
+            color: var(--text);
+            box-shadow: inset 0 0 0 1px rgba(34, 50, 56, 0.08);
+            appearance: none;
+        }
+
+        .action {
+            min-height: 46px;
+            padding: 0 18px;
+            border-radius: 14px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: background-color 0.18s ease, transform 0.18s ease;
+        }
+
+        .action.primary {
+            background: var(--accent);
+            color: #f8fbfa;
+        }
+
+        .action.primary:hover {
+            background: var(--accent-strong);
+            transform: translateY(-1px);
+        }
+
+        .score-strip {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .score-item {
+            padding: 12px 14px;
+            border-radius: 18px;
+            background: #fffaf0;
+            border: 1px solid rgba(34, 50, 56, 0.08);
+        }
+
+        .score-label {
+            display: block;
+            color: var(--muted);
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .score-value {
+            display: block;
+            margin-top: 6px;
+            font-size: 1.15rem;
+            line-height: 1.35;
+            font-weight: 800;
+        }
+
+        .status-bar {
+            margin-top: 16px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: #f8f3e8;
+            border: 1px solid rgba(34, 50, 56, 0.08);
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .status-bar[data-state="success"] {
+            background: #edf6f5;
+            color: var(--accent-strong);
+        }
+
+        .status-bar[data-state="hint"] {
+            background: #fff4e7;
+            color: var(--warm);
+        }
+
+        .board {
+            display: grid;
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .memory-card {
+            aspect-ratio: 1 / 1;
+            border: none;
+            background: transparent;
+            padding: 0;
+            cursor: pointer;
+            perspective: 960px;
+        }
+
+        .memory-card:disabled {
+            cursor: default;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.35s ease;
+        }
+
+        .memory-card.is-revealed .card-inner,
+        .memory-card.is-matched .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            inset: 0;
+            border-radius: 22px;
+            display: grid;
+            place-items: center;
+            backface-visibility: hidden;
+            box-shadow: inset 0 0 0 1px rgba(34, 50, 56, 0.08);
+        }
+
+        .card-front {
+            background:
+                linear-gradient(160deg, rgba(15, 118, 110, 0.9), rgba(11, 91, 85, 0.95)),
+                var(--accent);
+            color: rgba(255, 255, 255, 0.95);
+            font-size: clamp(1rem, 4vw, 1.25rem);
+            font-weight: 800;
+            letter-spacing: 0.08em;
+        }
+
+        .card-back {
+            background: #fffdf8;
+            transform: rotateY(180deg);
+            font-size: clamp(2rem, 8vw, 3.4rem);
+        }
+
+        .memory-card.is-matched .card-back {
+            background: linear-gradient(180deg, #fff8eb, #f5ede0);
+            box-shadow: inset 0 0 0 2px rgba(198, 122, 32, 0.18);
+        }
+
+        .memory-card:not(:disabled):hover .card-front {
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 12px;
+            }
+
+            .card {
+                padding: 18px;
+                border-radius: 24px;
+            }
+
+            .toolbar {
+                padding: 14px;
+            }
+
+            .field,
+            .action {
+                width: 100%;
+            }
+
+            .score-strip {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <main class="card">
+            <a class="home-link" href="../../index.html">返回首页</a>
+
+            <header class="header">
+                <p class="eyebrow">记忆训练小游戏</p>
+                <h1>记忆翻牌</h1>
+                <p class="intro">翻开两张一样的卡片，把它们成对找出来。难度越高，需要记住的位置越多。</p>
+            </header>
+
+            <section class="toolbar" aria-label="记忆翻牌设置">
+                <div class="field">
+                    <label for="difficulty">挑战难度</label>
+                    <select id="difficulty" aria-label="挑战难度">
+                        <option value="easy">简单 · 4 对</option>
+                        <option value="medium" selected>中等 · 6 对</option>
+                        <option value="hard">困难 · 8 对</option>
+                    </select>
+                </div>
+                <button class="action primary" id="restart-btn" type="button">开始新一局</button>
+            </section>
+
+            <section class="score-strip" aria-label="当前进度">
+                <div class="score-item">
+                    <span class="score-label">已配对</span>
+                    <strong class="score-value" id="matched-count">0 / 6</strong>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">翻牌次数</span>
+                    <strong class="score-value" id="move-count">0</strong>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">当前难度</span>
+                    <strong class="score-value" id="difficulty-label">中等</strong>
+                </div>
+            </section>
+
+            <div class="status-bar" id="status-bar" data-state="ready" aria-live="polite"></div>
+            <section class="board" id="board" aria-label="记忆翻牌棋盘"></section>
+        </main>
+    </div>
+
+    <script>
+        const DIFFICULTY_CONFIGS = {
+            easy: {
+                label: "简单",
+                pairs: 4,
+                columns: 4
+            },
+            medium: {
+                label: "中等",
+                pairs: 6,
+                columns: 4
+            },
+            hard: {
+                label: "困难",
+                pairs: 8,
+                columns: 4
+            }
+        };
+
+        const SYMBOL_POOL = ["🍎", "🍋", "🍇", "🍓", "🍒", "🥕", "🌽", "⭐", "🚗", "🧩", "🐳", "🦋"];
+
+        const boardElement = document.getElementById("board");
+        const difficultyElement = document.getElementById("difficulty");
+        const restartButton = document.getElementById("restart-btn");
+        const matchedCountElement = document.getElementById("matched-count");
+        const moveCountElement = document.getElementById("move-count");
+        const difficultyLabelElement = document.getElementById("difficulty-label");
+        const statusBarElement = document.getElementById("status-bar");
+
+        const state = {
+            difficulty: "medium",
+            deck: [],
+            selectedIndices: [],
+            matchedPairs: 0,
+            moves: 0,
+            lockBoard: false,
+            timerId: null
+        };
+
+        function getCurrentConfig() {
+            return DIFFICULTY_CONFIGS[state.difficulty] || DIFFICULTY_CONFIGS.medium;
+        }
+
+        function shuffleArray(items) {
+            const shuffled = [...items];
+
+            for (let index = shuffled.length - 1; index > 0; index -= 1) {
+                const swapIndex = Math.floor(Math.random() * (index + 1));
+                [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+            }
+
+            return shuffled;
+        }
+
+        function buildDeck(pairCount) {
+            const symbols = shuffleArray(SYMBOL_POOL).slice(0, pairCount);
+            const cards = symbols.flatMap((symbol, symbolIndex) => ([
+                {
+                    id: `${symbolIndex}-a`,
+                    symbol,
+                    revealed: false,
+                    matched: false
+                },
+                {
+                    id: `${symbolIndex}-b`,
+                    symbol,
+                    revealed: false,
+                    matched: false
+                }
+            ]));
+
+            return shuffleArray(cards);
+        }
+
+        function setStatus(message, stateName) {
+            statusBarElement.textContent = message;
+            statusBarElement.dataset.state = stateName || "ready";
+        }
+
+        function updateMeta() {
+            const config = getCurrentConfig();
+            matchedCountElement.textContent = `${state.matchedPairs} / ${config.pairs}`;
+            moveCountElement.textContent = String(state.moves);
+            difficultyLabelElement.textContent = config.label;
+        }
+
+        function renderBoard() {
+            const config = getCurrentConfig();
+            boardElement.innerHTML = "";
+            boardElement.style.gridTemplateColumns = `repeat(${config.columns}, minmax(0, 1fr))`;
+
+            state.deck.forEach((card, index) => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "memory-card";
+                button.dataset.index = String(index);
+                button.disabled = state.lockBoard || card.matched || card.revealed;
+                button.setAttribute("aria-label", card.revealed || card.matched ? `卡片 ${card.symbol}` : "未翻开的卡片");
+
+                if (card.revealed) {
+                    button.classList.add("is-revealed");
+                }
+
+                if (card.matched) {
+                    button.classList.add("is-matched");
+                }
+
+                const inner = document.createElement("div");
+                inner.className = "card-inner";
+
+                const front = document.createElement("div");
+                front.className = "card-face card-front";
+                front.textContent = "翻";
+
+                const back = document.createElement("div");
+                back.className = "card-face card-back";
+                back.textContent = card.symbol;
+
+                inner.appendChild(front);
+                inner.appendChild(back);
+                button.appendChild(inner);
+                button.addEventListener("click", () => handleCardClick(index));
+                boardElement.appendChild(button);
+            });
+
+            updateMeta();
+        }
+
+        function clearPendingTimeout() {
+            if (state.timerId !== null) {
+                window.clearTimeout(state.timerId);
+                state.timerId = null;
+            }
+        }
+
+        function startGame() {
+            const config = getCurrentConfig();
+
+            clearPendingTimeout();
+            state.deck = buildDeck(config.pairs);
+            state.selectedIndices = [];
+            state.matchedPairs = 0;
+            state.moves = 0;
+            state.lockBoard = false;
+
+            renderBoard();
+            setStatus("翻开两张一样的卡片，把它们配成一对。", "ready");
+        }
+
+        function finishTurn() {
+            state.selectedIndices = [];
+            state.lockBoard = false;
+            renderBoard();
+        }
+
+        function checkForCompletion() {
+            const config = getCurrentConfig();
+            if (state.matchedPairs !== config.pairs) {
+                return;
+            }
+
+            setStatus(`全部找到了，一共用了 ${state.moves} 次翻牌。`, "success");
+        }
+
+        function handleMatchedPair(firstIndex, secondIndex) {
+            state.deck[firstIndex].matched = true;
+            state.deck[secondIndex].matched = true;
+            state.matchedPairs += 1;
+            finishTurn();
+            checkForCompletion();
+        }
+
+        function handleMismatchedPair(firstIndex, secondIndex) {
+            state.lockBoard = true;
+            renderBoard();
+            setStatus("这两张不一样，记住它们的位置。", "hint");
+
+            state.timerId = window.setTimeout(() => {
+                state.deck[firstIndex].revealed = false;
+                state.deck[secondIndex].revealed = false;
+                state.timerId = null;
+                finishTurn();
+                setStatus("继续翻牌，把一样的卡片找出来。", "ready");
+            }, 700);
+        }
+
+        function handleCardClick(index) {
+            if (state.lockBoard) {
+                return;
+            }
+
+            const card = state.deck[index];
+            if (!card || card.revealed || card.matched) {
+                return;
+            }
+
+            card.revealed = true;
+            state.selectedIndices.push(index);
+            renderBoard();
+
+            if (state.selectedIndices.length < 2) {
+                setStatus("再翻一张，看看能不能找到一样的图案。", "ready");
+                return;
+            }
+
+            const [firstIndex, secondIndex] = state.selectedIndices;
+            const firstCard = state.deck[firstIndex];
+            const secondCard = state.deck[secondIndex];
+
+            state.moves += 1;
+
+            if (firstCard.symbol === secondCard.symbol) {
+                setStatus("找对了，继续保持。", "success");
+                handleMatchedPair(firstIndex, secondIndex);
+                return;
+            }
+
+            handleMismatchedPair(firstIndex, secondIndex);
+        }
+
+        difficultyElement.addEventListener("change", () => {
+            state.difficulty = difficultyElement.value;
+            startGame();
+        });
+
+        restartButton.addEventListener("click", startGame);
+
+        startGame();
+    </script>
+</body>
+</html>
