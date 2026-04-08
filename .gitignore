@@ -1,0 +1,18 @@
+*_bak.html
+dist/
+build/
+
+# 数据库
+*.db
+*.sqlite
+
+# 日志
+logs/
+*.log
+
+
+.idea/
+.vscode/
+*.swp
+.claude/
+CLAUDE.md

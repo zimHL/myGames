@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>井字棋</title>
+    <style>
+        :root {
+            --bg: #f4efe4;
+            --card: rgba(255, 251, 243, 0.92);
+            --line: rgba(34, 50, 56, 0.12);
+            --text: #223238;
+            --muted: #647379;
+            --accent: #0f766e;
+            --accent-strong: #0b5b55;
+            --warm: #c67a20;
+            --shadow: 0 24px 48px rgba(34, 50, 56, 0.14);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            min-height: 100%;
+        }
+
+        body {
+            display: grid;
+            place-items: center;
+            padding: 20px;
+            font-family: "Trebuchet MS", "Avenir Next", "Microsoft YaHei", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(198, 122, 32, 0.16), transparent 24%),
+                radial-gradient(circle at right 18% top 12%, rgba(15, 118, 110, 0.16), transparent 22%),
+                linear-gradient(180deg, #f8f4ea 0%, var(--bg) 52%, #efe6d1 100%);
+        }
+
+        .page {
+            width: min(100%, 560px);
+        }
+
+        .card {
+            border: 1px solid var(--line);
+            border-radius: 28px;
+            background: var(--card);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(12px);
+            padding: 24px;
+        }
+
+        .home-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 38px;
+            padding: 0 14px;
+            border-radius: 999px;
+            background: #eef5f4;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        .home-link:hover {
+            background: #e2f0ee;
+        }
+
+        .header {
+            margin-top: 18px;
+        }
+
+        .eyebrow {
+            margin: 0 0 10px;
+            color: var(--accent);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(2.2rem, 6vw, 3rem);
+            line-height: 0.95;
+            letter-spacing: -0.05em;
+        }
+
+        .intro {
+            margin: 14px 0 0;
+            color: var(--muted);
+            font-size: 1rem;
+            line-height: 1.75;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        .mode-switch {
+            display: inline-flex;
+            padding: 4px;
+            border-radius: 999px;
+            background: #f1ebe0;
+            border: 1px solid rgba(34, 50, 56, 0.08);
+        }
+
+        .mode-btn,
+        .reset-btn,
+        .cell {
+            border: none;
+            font: inherit;
+        }
+
+        .mode-btn,
+        .reset-btn {
+            min-height: 42px;
+            padding: 0 16px;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+        }
+
+        .mode-btn {
+            color: var(--muted);
+            background: transparent;
+            font-weight: 700;
+        }
+
+        .mode-btn.active {
+            background: var(--card);
+            color: var(--text);
+            box-shadow: 0 8px 18px rgba(34, 50, 56, 0.08);
+        }
+
+        .reset-btn {
+            background: var(--accent);
+            color: #f8fbfa;
+            font-weight: 700;
+        }
+
+        .reset-btn:hover {
+            background: var(--accent-strong);
+            transform: translateY(-1px);
+        }
+
+        .status-bar {
+            margin-top: 18px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: #f8f3e8;
+            border: 1px solid rgba(34, 50, 56, 0.08);
+            font-size: 1rem;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .status-bar[data-state="thinking"] {
+            background: #eef5f4;
+            color: var(--accent-strong);
+        }
+
+        .status-bar[data-state="win"] {
+            background: #fff3df;
+            color: #8f5612;
+        }
+
+        .status-bar[data-state="loss"] {
+            background: #edf6f5;
+            color: var(--accent-strong);
+        }
+
+        .status-bar[data-state="draw"] {
+            background: #f3efe6;
+            color: var(--muted);
+        }
+
+        .score-strip {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .score-item {
+            padding: 12px 10px;
+            border-radius: 18px;
+            background: #fffaf0;
+            border: 1px solid rgba(34, 50, 56, 0.08);
+            text-align: center;
+        }
+
+        .score-label {
+            display: block;
+            color: var(--muted);
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .score-value {
+            display: block;
+            margin-top: 6px;
+            font-size: 1.4rem;
+            line-height: 1;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .cell {
+            aspect-ratio: 1 / 1;
+            border-radius: 24px;
+            background: #fffdf7;
+            box-shadow: inset 0 0 0 1px rgba(34, 50, 56, 0.06);
+            color: var(--text);
+            font-size: clamp(2.6rem, 10vw, 4rem);
+            font-weight: 800;
+            cursor: pointer;
+            position: relative;
+            transition: background-color 0.18s ease, transform 0.18s ease;
+        }
+
+        .cell:hover:not(:disabled) {
+            background: #fff8ec;
+            transform: translateY(-2px);
+        }
+
+        .cell::before {
+            content: attr(data-preview);
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            opacity: 0;
+            transition: opacity 0.18s ease;
+        }
+
+        .cell.preview-x::before {
+            color: rgba(198, 122, 32, 0.28);
+        }
+
+        .cell.preview-o::before {
+            color: rgba(15, 118, 110, 0.28);
+        }
+
+        .cell.preview-x:hover::before,
+        .cell.preview-x:focus-visible::before,
+        .cell.preview-o:hover::before,
+        .cell.preview-o:focus-visible::before {
+            opacity: 1;
+        }
+
+        .cell:disabled {
+            cursor: default;
+        }
+
+        .cell.x-cell {
+            color: var(--warm);
+        }
+
+        .cell.o-cell {
+            color: var(--accent);
+        }
+
+        .cell.winner {
+            background: #ecf8f5;
+            box-shadow: inset 0 0 0 2px rgba(15, 118, 110, 0.18);
+        }
+
+        @media (max-width: 560px) {
+            body {
+                padding: 12px;
+            }
+
+            .card {
+                padding: 18px;
+                border-radius: 24px;
+            }
+
+            .toolbar {
+                align-items: stretch;
+            }
+
+            .mode-switch,
+            .reset-btn {
+                width: 100%;
+            }
+
+            .mode-switch {
+                justify-content: space-between;
+            }
+
+            .mode-btn {
+                flex: 1;
+            }
+
+            .status-bar {
+                padding: 12px 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <main class="card">
+            <a class="home-link" href="../../index.html">返回首页</a>
+
+            <header class="header">
+                <p class="eyebrow">经典小游戏</p>
+                <h1>井字棋</h1>
+                <p class="intro">三子连成一线即可获胜，适合练习观察、判断和预判。</p>
+            </header>
+
+            <div class="toolbar">
+                <div class="mode-switch" role="group" aria-label="模式切换">
+                    <button class="mode-btn active" data-mode="ai" type="button">和电脑玩</button>
+                    <button class="mode-btn" data-mode="local" type="button">双人对战</button>
+                </div>
+                <button class="reset-btn" id="resetGameBtn" type="button">重新开始</button>
+            </div>
+
+            <div class="score-strip" aria-label="本页战绩">
+                <div class="score-item">
+                    <span class="score-label" id="scoreLabelX">你</span>
+                    <strong class="score-value" id="scoreX">0</strong>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">平局</span>
+                    <strong class="score-value" id="scoreDraw">0</strong>
+                </div>
+                <div class="score-item">
+                    <span class="score-label" id="scoreLabelO">电脑</span>
+                    <strong class="score-value" id="scoreO">0</strong>
+                </div>
+            </div>
+
+            <div class="status-bar" id="statusBar" aria-live="polite"></div>
+            <div class="board" id="board" role="grid" aria-label="井字棋棋盘"></div>
+        </main>
+    </div>
+
+    <script>
+        const WIN_PATTERNS = [
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            [0, 4, 8],
+            [2, 4, 6]
+        ];
+
+        const MODES = {
+            AI: "ai",
+            LOCAL: "local"
+        };
+
+        const HUMAN_PIECE = "X";
+        const AI_PIECE = "O";
+
+        const boardElement = document.getElementById("board");
+        const statusBarElement = document.getElementById("statusBar");
+        const resetButton = document.getElementById("resetGameBtn");
+        const scoreXElement = document.getElementById("scoreX");
+        const scoreOElement = document.getElementById("scoreO");
+        const scoreDrawElement = document.getElementById("scoreDraw");
+        const scoreLabelXElement = document.getElementById("scoreLabelX");
+        const scoreLabelOElement = document.getElementById("scoreLabelO");
+        const modeButtons = Array.from(document.querySelectorAll(".mode-btn"));
+
+        const state = {
+            board: Array(9).fill(""),
+            currentPlayer: HUMAN_PIECE,
+            mode: MODES.AI,
+            result: null,
+            isThinking: false,
+            scores: {
+                X: 0,
+                O: 0,
+                draw: 0
+            }
+        };
+
+        function getNextPlayer(player) {
+            return player === HUMAN_PIECE ? AI_PIECE : HUMAN_PIECE;
+        }
+
+        function evaluateBoard(board) {
+            for (const pattern of WIN_PATTERNS) {
+                const [first, second, third] = pattern;
+                if (!board[first]) {
+                    continue;
+                }
+
+                if (board[first] === board[second] && board[first] === board[third]) {
+                    return {
+                        winner: board[first],
+                        line: pattern
+                    };
+                }
+            }
+
+            if (board.every(Boolean)) {
+                return {
+                    winner: "draw",
+                    line: []
+                };
+            }
+
+            return null;
+        }
+
+        function getStatusText() {
+            if (state.result) {
+                if (state.result.winner === "draw") {
+                    return "这局打平了，再来一局？";
+                }
+
+                if (state.mode === MODES.AI) {
+                    return state.result.winner === HUMAN_PIECE ? "你赢了，真棒" : "电脑赢了，再试一次";
+                }
+
+                return `${state.result.winner} 赢下了这一局`;
+            }
+
+            if (state.mode === MODES.AI) {
+                if (state.isThinking) {
+                    return "电脑正在想下一步...";
+                }
+
+                return state.currentPlayer === HUMAN_PIECE ? "轮到你落子" : "轮到电脑落子";
+            }
+
+            return `轮到 ${state.currentPlayer}`;
+        }
+
+        function getStatusState() {
+            if (state.result) {
+                if (state.result.winner === "draw") {
+                    return "draw";
+                }
+
+                if (state.mode === MODES.AI) {
+                    return state.result.winner === HUMAN_PIECE ? "win" : "loss";
+                }
+
+                return "win";
+            }
+
+            return state.isThinking ? "thinking" : "ready";
+        }
+
+        function getPreviewValue() {
+            if (state.result || state.isThinking) {
+                return "";
+            }
+
+            if (state.mode === MODES.AI) {
+                return state.currentPlayer === HUMAN_PIECE ? HUMAN_PIECE : "";
+            }
+
+            return state.currentPlayer;
+        }
+
+        function syncScoreboard() {
+            const primaryLabel = state.mode === MODES.AI ? "你" : "X";
+            const secondaryLabel = state.mode === MODES.AI ? "电脑" : "O";
+
+            scoreLabelXElement.textContent = primaryLabel;
+            scoreLabelOElement.textContent = secondaryLabel;
+            scoreXElement.textContent = String(state.scores.X);
+            scoreOElement.textContent = String(state.scores.O);
+            scoreDrawElement.textContent = String(state.scores.draw);
+        }
+
+        function recordResult(result) {
+            if (result.winner === "draw") {
+                state.scores.draw += 1;
+                return;
+            }
+
+            state.scores[result.winner] += 1;
+        }
+
+        function render() {
+            const cells = boardElement.querySelectorAll(".cell");
+            const winningLine = state.result ? state.result.line : [];
+            const isAIMove = state.mode === MODES.AI && state.currentPlayer === AI_PIECE;
+            const previewValue = getPreviewValue();
+
+            cells.forEach((cell, index) => {
+                const value = state.board[index];
+                const disabled = Boolean(value) || Boolean(state.result) || state.isThinking || isAIMove;
+
+                cell.textContent = value;
+                cell.disabled = disabled;
+                cell.classList.toggle("x-cell", value === HUMAN_PIECE);
+                cell.classList.toggle("o-cell", value === AI_PIECE);
+                cell.classList.toggle("winner", winningLine.includes(index));
+                cell.classList.toggle("preview-x", !value && previewValue === HUMAN_PIECE);
+                cell.classList.toggle("preview-o", !value && previewValue === AI_PIECE);
+                cell.dataset.preview = value ? "" : previewValue;
+                cell.setAttribute("aria-label", value ? `第 ${index + 1} 格，${value}` : `第 ${index + 1} 格，空白`);
+            });
+
+            modeButtons.forEach((button) => {
+                button.classList.toggle("active", button.dataset.mode === state.mode);
+            });
+
+            statusBarElement.textContent = getStatusText();
+            statusBarElement.dataset.state = getStatusState();
+            syncScoreboard();
+        }
+
+        function playMove(index) {
+            if (state.board[index] || state.result) {
+                return;
+            }
+
+            state.board[index] = state.currentPlayer;
+            state.result = evaluateBoard(state.board);
+
+            if (state.result) {
+                recordResult(state.result);
+            } else {
+                state.currentPlayer = getNextPlayer(state.currentPlayer);
+            }
+
+            render();
+
+            if (!state.result && state.mode === MODES.AI && state.currentPlayer === AI_PIECE) {
+                scheduleAIMove();
+            }
+        }
+
+        function handleCellClick(event) {
+            const index = Number(event.currentTarget.dataset.index);
+
+            if (Number.isNaN(index) || state.isThinking) {
+                return;
+            }
+
+            if (state.mode === MODES.AI && state.currentPlayer !== HUMAN_PIECE) {
+                return;
+            }
+
+            playMove(index);
+        }
+
+        function resetGame() {
+            state.board = Array(9).fill("");
+            state.currentPlayer = HUMAN_PIECE;
+            state.result = null;
+            state.isThinking = false;
+            render();
+        }
+
+        function setMode(mode) {
+            if (!mode || mode === state.mode) {
+                return;
+            }
+
+            state.mode = mode;
+            resetGame();
+        }
+
+        function scoreResult(result, depth) {
+            if (result.winner === AI_PIECE) {
+                return 10 - depth;
+            }
+
+            if (result.winner === HUMAN_PIECE) {
+                return depth - 10;
+            }
+
+            return 0;
+        }
+
+        function minimax(board, player, depth) {
+            const result = evaluateBoard(board);
+            if (result) {
+                return scoreResult(result, depth);
+            }
+
+            if (player === AI_PIECE) {
+                let bestScore = -Infinity;
+
+                for (let index = 0; index < board.length; index += 1) {
+                    if (board[index]) {
+                        continue;
+                    }
+
+                    board[index] = AI_PIECE;
+                    bestScore = Math.max(bestScore, minimax(board, HUMAN_PIECE, depth + 1));
+                    board[index] = "";
+                }
+
+                return bestScore;
+            }
+
+            let bestScore = Infinity;
+
+            for (let index = 0; index < board.length; index += 1) {
+                if (board[index]) {
+                    continue;
+                }
+
+                board[index] = HUMAN_PIECE;
+                bestScore = Math.min(bestScore, minimax(board, AI_PIECE, depth + 1));
+                board[index] = "";
+            }
+
+            return bestScore;
+        }
+
+        function getBestMove(board) {
+            let bestMove = -1;
+            let bestScore = -Infinity;
+
+            for (let index = 0; index < board.length; index += 1) {
+                if (board[index]) {
+                    continue;
+                }
+
+                board[index] = AI_PIECE;
+                const score = minimax(board, HUMAN_PIECE, 1);
+                board[index] = "";
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = index;
+                }
+            }
+
+            return bestMove;
+        }
+
+        function scheduleAIMove() {
+            if (state.mode !== MODES.AI || state.result || state.currentPlayer !== AI_PIECE || state.isThinking) {
+                return;
+            }
+
+            state.isThinking = true;
+            render();
+
+            window.setTimeout(() => {
+                state.isThinking = false;
+
+                if (state.mode !== MODES.AI || state.result || state.currentPlayer !== AI_PIECE) {
+                    render();
+                    return;
+                }
+
+                const bestMove = getBestMove(state.board.slice());
+                if (bestMove >= 0) {
+                    playMove(bestMove);
+                    return;
+                }
+
+                render();
+            }, 220);
+        }
+
+        function createBoard() {
+            for (let index = 0; index < 9; index += 1) {
+                const cellButton = document.createElement("button");
+                cellButton.type = "button";
+                cellButton.className = "cell";
+                cellButton.dataset.index = String(index);
+                cellButton.addEventListener("click", handleCellClick);
+                boardElement.appendChild(cellButton);
+            }
+        }
+
+        modeButtons.forEach((button) => {
+            button.addEventListener("click", () => {
+                setMode(button.dataset.mode);
+            });
+        });
+
+        resetButton.addEventListener("click", resetGame);
+
+        createBoard();
+        render();
+    </script>
+</body>
+</html>

@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>数独</title>
+    <style>
+        :root {
+            --bg: #f4efe4;
+            --card: rgba(255, 251, 243, 0.92);
+            --card-soft: #fff7ea;
+            --line: rgba(34, 50, 56, 0.12);
+            --text: #223238;
+            --muted: #647379;
+            --accent: #0f766e;
+            --accent-strong: #0b5b55;
+            --warm: #c67a20;
+            --warm-soft: rgba(198, 122, 32, 0.12);
+            --danger: #b45309;
+            --danger-soft: rgba(180, 83, 9, 0.12);
+            --shadow: 0 24px 48px rgba(34, 50, 56, 0.14);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            min-height: 100%;
+        }
+
+        body {
+            padding: 20px;
+            font-family: "Trebuchet MS", "Avenir Next", "Microsoft YaHei", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(198, 122, 32, 0.14), transparent 24%),
+                radial-gradient(circle at right 18% top 12%, rgba(15, 118, 110, 0.15), transparent 22%),
+                linear-gradient(180deg, #f8f4ea 0%, var(--bg) 52%, #efe6d1 100%);
+        }
+
+        .page {
+            width: min(100%, 760px);
+            margin: 0 auto;
+        }
+
+        .card {
+            border: 1px solid var(--line);
+            border-radius: 30px;
+            background: var(--card);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(12px);
+            padding: 24px;
+        }
+
+        .home-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 38px;
+            padding: 0 14px;
+            border-radius: 999px;
+            background: #eef5f4;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        .home-link:hover {
+            background: #e2f0ee;
+        }
+
+        .header {
+            margin-top: 18px;
+        }
+
+        .eyebrow {
+            margin: 0 0 10px;
+            color: var(--accent);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        h1,
+        h2,
+        p {
+            margin: 0;
+        }
+
+        h1 {
+            font-size: clamp(2.3rem, 6vw, 3.2rem);
+            line-height: 0.95;
+            letter-spacing: -0.05em;
+        }
+
+        .toolbar {
+            margin-top: 18px;
+            padding: 18px;
+            border-radius: 24px;
+            background: var(--card-soft);
+            border: 1px solid rgba(34, 50, 56, 0.08);
+        }
+
+        .fields {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .field label {
+            color: var(--muted);
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        select,
+        button {
+            border: none;
+            font: inherit;
+        }
+
+        select {
+            min-height: 46px;
+            padding: 0 14px;
+            border-radius: 14px;
+            background: #fffdf8;
+            color: var(--text);
+            box-shadow: inset 0 0 0 1px rgba(34, 50, 56, 0.08);
+            appearance: none;
+        }
+
+        .actions {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .action {
+            min-height: 46px;
+            padding: 0 14px;
+            border-radius: 14px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+        }
+
+        .action:hover {
+            transform: translateY(-1px);
+        }
+
+        .action.primary {
+            background: var(--accent);
+            color: #f8fbfa;
+        }
+
+        .action.primary:hover {
+            background: var(--accent-strong);
+        }
+
+        .action.secondary {
+            background: #ecf5f3;
+            color: var(--accent-strong);
+        }
+
+        .action.secondary:hover {
+            background: #e2f0ee;
+        }
+
+        .action.subtle {
+            background: #f3ede2;
+            color: var(--text);
+        }
+
+        .action.subtle:hover {
+            background: #ede4d5;
+        }
+
+        .board-shell {
+            margin-top: 16px;
+            padding: 18px;
+            border-radius: 24px;
+            background: var(--card-soft);
+            border: 1px solid rgba(34, 50, 56, 0.08);
+        }
+
+        .sudoku-board {
+            display: inline-block;
+            width: 100%;
+            max-width: 460px;
+            border: 3px solid rgba(34, 50, 56, 0.86);
+            border-radius: 22px;
+            padding: 8px;
+            background: #fffdf8;
+            box-shadow: inset 0 0 0 1px rgba(34, 50, 56, 0.05);
+        }
+
+        .board-shell-inner {
+            display: flex;
+            justify-content: center;
+        }
+
+        .sudoku-board[data-size="4"] {
+            max-width: 340px;
+        }
+
+        .sudoku-board[data-size="6"] {
+            max-width: 390px;
+        }
+
+        .sudoku-row {
+            display: flex;
+            width: 100%;
+        }
+
+        .sudoku-cell {
+            flex: 1;
+            aspect-ratio: 1 / 1;
+            border: 1px solid rgba(34, 50, 56, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: #fffdf8;
+        }
+
+        .sudoku-cell.box-right {
+            border-right: 2px solid rgba(34, 50, 56, 0.84);
+        }
+
+        .sudoku-cell.box-bottom {
+            border-bottom: 2px solid rgba(34, 50, 56, 0.84);
+        }
+
+        .cell-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            outline: none;
+            user-select: text;
+            border-radius: 10px;
+            transition: background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .cell-content.initial {
+            color: var(--text);
+            font-weight: 800;
+        }
+
+        .cell-content.user-input {
+            color: var(--warm);
+            font-weight: 700;
+            cursor: text;
+        }
+
+        .cell-content.user-input:focus {
+            background: rgba(198, 122, 32, 0.12);
+            box-shadow: inset 0 0 0 2px rgba(198, 122, 32, 0.22);
+        }
+
+        .cell-content.masked {
+            color: var(--accent);
+            font-weight: 800;
+            background: rgba(15, 118, 110, 0.08);
+        }
+
+        .cell-content.incorrect {
+            color: var(--danger);
+            background: var(--danger-soft);
+        }
+
+        .sudoku-board[data-size="4"] .cell-content.initial,
+        .sudoku-board[data-size="4"] .cell-content.user-input,
+        .sudoku-board[data-size="4"] .cell-content.masked {
+            font-size: 1.65rem;
+        }
+
+        .sudoku-board[data-size="6"] .cell-content.initial,
+        .sudoku-board[data-size="6"] .cell-content.user-input,
+        .sudoku-board[data-size="6"] .cell-content.masked {
+            font-size: 1.36rem;
+        }
+
+        .sudoku-board[data-size="9"] .cell-content.initial,
+        .sudoku-board[data-size="9"] .cell-content.user-input,
+        .sudoku-board[data-size="9"] .cell-content.masked {
+            font-size: 1.12rem;
+        }
+
+        .cell-answer {
+            position: absolute;
+            top: 3px;
+            right: 5px;
+            color: var(--accent);
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 12px;
+            }
+
+            .card {
+                padding: 18px;
+                border-radius: 24px;
+            }
+
+            .fields,
+            .actions {
+                grid-template-columns: 1fr;
+            }
+
+            .toolbar,
+            .board-shell {
+                padding: 14px;
+                border-radius: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <main class="card">
+            <a class="home-link" href="../../index.html">返回首页</a>
+
+            <header class="header">
+                <p class="eyebrow">逻辑训练小游戏</p>
+                <h1>数独</h1>
+            </header>
+
+            <section class="toolbar" aria-label="数独设置">
+                <div class="fields">
+                    <div class="field">
+                        <label for="board-size">盘面大小</label>
+                        <select id="board-size" aria-label="盘面大小">
+                            <option value="4">4x4 入门</option>
+                            <option value="6">6x6 进阶</option>
+                            <option value="9" selected>9x9 标准</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="difficulty">挑战难度</label>
+                        <select id="difficulty" aria-label="挑战难度">
+                            <option value="easy">简单</option>
+                            <option value="medium" selected>中等</option>
+                            <option value="hard">困难</option>
+                            <option value="hell">地狱</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="action primary" id="generate" type="button">生成新题</button>
+                    <button class="action secondary" id="toggle-answer" type="button">查看答案</button>
+                    <button class="action subtle" id="clear" type="button">清空填写</button>
+                </div>
+            </section>
+
+            <section class="board-shell" aria-label="数独棋盘区域">
+                <div class="board-shell-inner">
+                    <div class="sudoku-board" id="sudoku-board" data-size="9"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const BOARD_CONFIGS = {
+            4: {
+                size: 4,
+                boxRows: 2,
+                boxCols: 2,
+                digits: [1, 2, 3, 4],
+                difficultyHoles: {
+                    easy: 6,
+                    medium: 8,
+                    hard: 10,
+                    hell: 10
+                },
+                maskRatio: 0.18
+            },
+            6: {
+                size: 6,
+                boxRows: 2,
+                boxCols: 3,
+                digits: [1, 2, 3, 4, 5, 6],
+                difficultyHoles: {
+                    easy: 12,
+                    medium: 16,
+                    hard: 20,
+                    hell: 20
+                },
+                maskRatio: 0.12
+            },
+            9: {
+                size: 9,
+                boxRows: 3,
+                boxCols: 3,
+                digits: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+                difficultyHoles: {
+                    easy: 35,
+                    medium: 45,
+                    hard: 55,
+                    hell: 55
+                },
+                maskRatio: 0.06
+            }
+        };
+
+        const MASK_SYMBOLS = ["*", "#", "@", "&", "%"];
+        const TOGGLE_LABELS = {
+            show: "查看答案",
+            hide: "隐藏答案"
+        };
+
+        let currentConfig = BOARD_CONFIGS[9];
+        let originalSudoku = [];
+        let answerSudoku = [];
+        let userInput = [];
+        let maskedCells = [];
+        let showAnswer = false;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            bindEvents();
+            generateSudoku();
+        });
+
+        function bindEvents() {
+            document.getElementById("board-size").addEventListener("change", generateSudoku);
+            document.getElementById("difficulty").addEventListener("change", generateSudoku);
+            document.getElementById("generate").addEventListener("click", generateSudoku);
+            document.getElementById("toggle-answer").addEventListener("click", toggleAnswer);
+            document.getElementById("clear").addEventListener("click", clearUserInput);
+        }
+
+        function getCurrentConfig() {
+            const size = Number(document.getElementById("board-size").value);
+            return BOARD_CONFIGS[size] || BOARD_CONFIGS[9];
+        }
+
+        function getDifficulty() {
+            return document.getElementById("difficulty").value;
+        }
+
+        function createMatrix(size, fillValue) {
+            return Array.from({ length: size }, () => Array(size).fill(fillValue));
+        }
+
+        function shuffleArray(items) {
+            const shuffled = [...items];
+
+            for (let index = shuffled.length - 1; index > 0; index -= 1) {
+                const swapIndex = Math.floor(Math.random() * (index + 1));
+                [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+            }
+
+            return shuffled;
+        }
+
+        function updateToggleAnswerText() {
+            document.getElementById("toggle-answer").textContent = showAnswer ? TOGGLE_LABELS.hide : TOGGLE_LABELS.show;
+        }
+
+        function generateSudoku() {
+            currentConfig = getCurrentConfig();
+            answerSudoku = generateAnswerSudoku(currentConfig);
+            originalSudoku = createOriginalSudoku(answerSudoku, currentConfig);
+            userInput = createMatrix(currentConfig.size, "");
+            maskedCells = getDifficulty() === "hell"
+                ? createMaskedCells(originalSudoku, answerSudoku, currentConfig)
+                : [];
+            showAnswer = false;
+            renderSudoku();
+        }
+
+        function toggleAnswer() {
+            showAnswer = !showAnswer;
+            renderSudoku();
+        }
+
+        function clearUserInput() {
+            userInput = createMatrix(currentConfig.size, "");
+            renderSudoku();
+        }
+
+        function generateAnswerSudoku(config) {
+            const board = createMatrix(config.size, 0);
+
+            function fill(position) {
+                if (position === config.size * config.size) {
+                    return true;
+                }
+
+                const row = Math.floor(position / config.size);
+                const col = position % config.size;
+
+                if (board[row][col] !== 0) {
+                    return fill(position + 1);
+                }
+
+                const numbers = shuffleArray(config.digits);
+                for (const number of numbers) {
+                    if (!isValidPlacement(board, row, col, number, config)) {
+                        continue;
+                    }
+
+                    board[row][col] = number;
+                    if (fill(position + 1)) {
+                        return true;
+                    }
+                    board[row][col] = 0;
+                }
+
+                return false;
+            }
+
+            fill(0);
+            return board;
+        }
+
+        function isValidPlacement(board, row, col, number, config) {
+            for (let index = 0; index < config.size; index += 1) {
+                if (board[row][index] === number || board[index][col] === number) {
+                    return false;
+                }
+            }
+
+            const startRow = Math.floor(row / config.boxRows) * config.boxRows;
+            const startCol = Math.floor(col / config.boxCols) * config.boxCols;
+
+            for (let rowOffset = 0; rowOffset < config.boxRows; rowOffset += 1) {
+                for (let colOffset = 0; colOffset < config.boxCols; colOffset += 1) {
+                    if (board[startRow + rowOffset][startCol + colOffset] === number) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        function createOriginalSudoku(answerBoard, config) {
+            const puzzle = answerBoard.map((row) => [...row]);
+            const holeCount = Math.min(
+                config.difficultyHoles[getDifficulty()] || config.difficultyHoles.medium,
+                config.size * config.size - config.size
+            );
+
+            let removed = 0;
+
+            while (removed < holeCount) {
+                const row = Math.floor(Math.random() * config.size);
+                const col = Math.floor(Math.random() * config.size);
+
+                if (puzzle[row][col] === 0) {
+                    continue;
+                }
+
+                puzzle[row][col] = 0;
+                removed += 1;
+            }
+
+            return puzzle;
+        }
+
+        function createMaskedCells(originalBoard, answerBoard, config) {
+            const visibleCells = [];
+
+            for (let row = 0; row < config.size; row += 1) {
+                for (let col = 0; col < config.size; col += 1) {
+                    if (originalBoard[row][col] !== 0) {
+                        visibleCells.push({ row, col });
+                    }
+                }
+            }
+
+            if (!visibleCells.length) {
+                return [];
+            }
+
+            let maskCount = Math.ceil(visibleCells.length * config.maskRatio);
+            maskCount = Math.max(1, maskCount);
+            maskCount = Math.min(maskCount, Math.max(1, Math.floor(visibleCells.length / 3)));
+
+            const selectedCells = shuffleArray(visibleCells).slice(0, maskCount);
+            const masked = selectedCells.map((cell, index) => ({
+                row: cell.row,
+                col: cell.col,
+                symbol: MASK_SYMBOLS[index % MASK_SYMBOLS.length],
+                originalValue: answerBoard[cell.row][cell.col]
+            }));
+
+            masked.forEach((cell) => {
+                originalBoard[cell.row][cell.col] = 0;
+            });
+
+            return masked;
+        }
+
+        function sanitizeUserValue(rawValue) {
+            const compactValue = rawValue.replace(/\s+/g, "");
+            const lastChar = compactValue.slice(-1);
+            return currentConfig.digits.map(String).includes(lastChar) ? lastChar : "";
+        }
+
+        function createCellContent(className) {
+            const content = document.createElement("div");
+            content.className = `cell-content ${className}`.trim();
+            return content;
+        }
+
+        function renderSudoku() {
+            const boardElement = document.getElementById("sudoku-board");
+            const maskedLookup = new Map(maskedCells.map((cell) => [`${cell.row}-${cell.col}`, cell]));
+
+            boardElement.innerHTML = "";
+            boardElement.dataset.size = String(currentConfig.size);
+
+            for (let row = 0; row < currentConfig.size; row += 1) {
+                const rowElement = document.createElement("div");
+                rowElement.className = "sudoku-row";
+
+                for (let col = 0; col < currentConfig.size; col += 1) {
+                    const cellElement = document.createElement("div");
+                    cellElement.className = "sudoku-cell";
+
+                    if ((col + 1) % currentConfig.boxCols === 0 && col !== currentConfig.size - 1) {
+                        cellElement.classList.add("box-right");
+                    }
+
+                    if ((row + 1) % currentConfig.boxRows === 0 && row !== currentConfig.size - 1) {
+                        cellElement.classList.add("box-bottom");
+                    }
+
+                    const maskedCell = maskedLookup.get(`${row}-${col}`);
+                    if (maskedCell) {
+                        const content = createCellContent(`initial ${showAnswer ? "" : "masked"}`.trim());
+                        content.contentEditable = "false";
+                        content.textContent = showAnswer ? String(maskedCell.originalValue) : maskedCell.symbol;
+                        cellElement.appendChild(content);
+                        rowElement.appendChild(cellElement);
+                        continue;
+                    }
+
+                    const cellValue = originalSudoku[row][col];
+                    if (cellValue !== 0) {
+                        const content = createCellContent("initial");
+                        content.contentEditable = "false";
+                        content.textContent = String(cellValue);
+                        cellElement.appendChild(content);
+                        rowElement.appendChild(cellElement);
+                        continue;
+                    }
+
+                    const content = createCellContent("user-input");
+                    content.contentEditable = showAnswer ? "false" : "true";
+                    content.spellcheck = false;
+                    content.setAttribute("inputmode", "numeric");
+                    content.setAttribute("role", "textbox");
+                    content.setAttribute("aria-label", `第 ${row + 1} 行，第 ${col + 1} 列`);
+                    content.textContent = userInput[row][col];
+                    content.classList.toggle(
+                        "incorrect",
+                        Boolean(userInput[row][col]) && userInput[row][col] !== String(answerSudoku[row][col])
+                    );
+
+                    if (!showAnswer) {
+                        content.tabIndex = 0;
+                        content.oninput = () => {
+                            const sanitizedValue = sanitizeUserValue(content.textContent.trim());
+                            content.textContent = sanitizedValue;
+                            userInput[row][col] = sanitizedValue;
+                            content.classList.toggle(
+                                "incorrect",
+                                Boolean(sanitizedValue) && sanitizedValue !== String(answerSudoku[row][col])
+                            );
+                        };
+                    } else {
+                        content.tabIndex = -1;
+                    }
+
+                    cellElement.appendChild(content);
+
+                    if (showAnswer) {
+                        const answer = document.createElement("div");
+                        answer.className = "cell-answer";
+                        answer.textContent = String(answerSudoku[row][col]);
+                        cellElement.appendChild(answer);
+                    }
+
+                    rowElement.appendChild(cellElement);
+                }
+
+                boardElement.appendChild(rowElement);
+            }
+
+            updateToggleAnswerText();
+        }
+    </script>
+</body>
+</html>
