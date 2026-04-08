@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -135,6 +135,8 @@
         }
 
         select {
+            width: 100%;
+            min-width: 0;
             min-height: 46px;
             padding: 0 14px;
             border-radius: 14px;
@@ -279,27 +281,213 @@
             transform: translateY(-1px);
         }
 
-        @media (max-width: 640px) {
+        @media (max-height: 920px) and (min-width: 641px) {
             body {
                 padding: 12px;
             }
 
+            .page {
+                width: min(100%, 860px);
+            }
+
             .card {
-                padding: 18px;
+                padding: 16px;
                 border-radius: 24px;
             }
 
-            .toolbar {
-                padding: 14px;
+            .header {
+                margin-top: 12px;
             }
 
-            .field,
+            .eyebrow,
+            .intro {
+                display: none;
+            }
+
+            h1 {
+                font-size: 2.2rem;
+            }
+
+            .toolbar {
+                margin-top: 12px;
+                padding: 12px;
+                border-radius: 18px;
+                gap: 10px;
+                align-items: center;
+                flex-wrap: nowrap;
+            }
+
+            .field {
+                min-width: 0;
+                gap: 4px;
+            }
+
+            .field label {
+                font-size: 0.8rem;
+            }
+
+            select {
+                min-height: 40px;
+                padding: 0 12px;
+                font-size: 0.92rem;
+            }
+
             .action {
-                width: 100%;
+                min-height: 40px;
+                padding: 0 14px;
+                font-size: 0.88rem;
             }
 
             .score-strip {
-                grid-template-columns: 1fr;
+                margin-top: 10px;
+                gap: 8px;
+            }
+
+            .score-item {
+                padding: 8px 10px;
+                border-radius: 14px;
+            }
+
+            .score-label {
+                font-size: 0.74rem;
+            }
+
+            .score-value {
+                margin-top: 4px;
+                font-size: 1rem;
+                line-height: 1.2;
+            }
+
+            .status-bar {
+                margin-top: 10px;
+                padding: 10px 12px;
+                border-radius: 14px;
+                font-size: 0.92rem;
+            }
+
+            .board {
+                margin-top: 10px;
+                gap: 8px;
+            }
+
+            .card-face {
+                border-radius: 16px;
+            }
+
+            .card-front {
+                font-size: 0.86rem;
+            }
+
+            .card-back {
+                font-size: clamp(1.1rem, 3.5vh, 2.2rem);
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 8px;
+            }
+
+            .card {
+                padding: 12px;
+                border-radius: 18px;
+            }
+
+            .home-link {
+                min-height: 32px;
+                padding: 0 12px;
+                font-size: 0.82rem;
+            }
+
+            .header {
+                margin-top: 10px;
+            }
+
+            .eyebrow,
+            .intro {
+                display: none;
+            }
+
+            h1 {
+                font-size: 1.9rem;
+            }
+
+            .toolbar {
+                margin-top: 12px;
+                padding: 10px;
+                border-radius: 16px;
+                gap: 8px;
+                align-items: center;
+                flex-wrap: nowrap;
+            }
+
+            .field {
+                min-width: 0;
+                gap: 4px;
+            }
+
+            .field label {
+                font-size: 0.76rem;
+            }
+
+            select {
+                min-height: 36px;
+                padding: 0 10px;
+                border-radius: 12px;
+                font-size: 0.9rem;
+            }
+
+            .action {
+                min-height: 36px;
+                padding: 0 12px;
+                border-radius: 12px;
+                font-size: 0.86rem;
+                white-space: nowrap;
+            }
+
+            .score-strip {
+                margin-top: 10px;
+                gap: 8px;
+            }
+
+            .score-item {
+                padding: 8px 8px;
+                border-radius: 14px;
+            }
+
+            .score-label {
+                font-size: 0.72rem;
+            }
+
+            .score-value {
+                margin-top: 4px;
+                font-size: 0.92rem;
+                line-height: 1.2;
+            }
+
+            .status-bar {
+                margin-top: 10px;
+                padding: 9px 10px;
+                border-radius: 14px;
+                font-size: 0.88rem;
+            }
+
+            .board {
+                margin-top: 10px;
+                gap: 6px;
+            }
+
+            .card-face {
+                border-radius: 12px;
+            }
+
+            .card-front {
+                font-size: 0.74rem;
+                letter-spacing: 0;
+            }
+
+            .card-back {
+                font-size: clamp(1rem, 5vw, 1.45rem);
             }
         }
     </style>
@@ -319,9 +507,10 @@
                 <div class="field">
                     <label for="difficulty">挑战难度</label>
                     <select id="difficulty" aria-label="挑战难度">
-                        <option value="easy">简单 · 4 对</option>
-                        <option value="medium" selected>中等 · 6 对</option>
-                        <option value="hard">困难 · 8 对</option>
+                        <option value="easy">8 张</option>
+                        <option value="medium" selected>16 张</option>
+                        <option value="hard">24 张</option>
+                        <option value="expert">32 张</option>
                     </select>
                 </div>
                 <button class="action primary" id="restart-btn" type="button">开始新一局</button>
@@ -330,7 +519,7 @@
             <section class="score-strip" aria-label="当前进度">
                 <div class="score-item">
                     <span class="score-label">已配对</span>
-                    <strong class="score-value" id="matched-count">0 / 6</strong>
+                    <strong class="score-value" id="matched-count">0 / 16</strong>
                 </div>
                 <div class="score-item">
                     <span class="score-label">翻牌次数</span>
@@ -338,7 +527,7 @@
                 </div>
                 <div class="score-item">
                     <span class="score-label">当前难度</span>
-                    <strong class="score-value" id="difficulty-label">中等</strong>
+                    <strong class="score-value" id="difficulty-label">16 张</strong>
                 </div>
             </section>
 
@@ -350,23 +539,32 @@
     <script>
         const DIFFICULTY_CONFIGS = {
             easy: {
-                label: "简单",
+                label: "8 张",
+                totalCards: 8,
                 pairs: 4,
                 columns: 4
             },
             medium: {
-                label: "中等",
-                pairs: 6,
+                label: "16 张",
+                totalCards: 16,
+                pairs: 8,
                 columns: 4
             },
             hard: {
-                label: "困难",
-                pairs: 8,
-                columns: 4
+                label: "24 张",
+                totalCards: 24,
+                pairs: 12,
+                columns: 6
+            },
+            expert: {
+                label: "32 张",
+                totalCards: 32,
+                pairs: 16,
+                columns: 8
             }
         };
 
-        const SYMBOL_POOL = ["🍎", "🍋", "🍇", "🍓", "🍒", "🥕", "🌽", "⭐", "🚗", "🧩", "🐳", "🦋"];
+        const SYMBOL_POOL = ["🍎", "🍋", "🍇", "🍓", "🍒", "🥕", "🌽", "⭐", "🚗", "🧩", "🐳", "🦋", "🐸", "🚀", "🍉", "🎈"];
 
         const boardElement = document.getElementById("board");
         const difficultyElement = document.getElementById("difficulty");
@@ -428,7 +626,7 @@
 
         function updateMeta() {
             const config = getCurrentConfig();
-            matchedCountElement.textContent = `${state.matchedPairs} / ${config.pairs}`;
+            matchedCountElement.textContent = `${state.matchedPairs * 2} / ${config.totalCards}`;
             moveCountElement.textContent = String(state.moves);
             difficultyLabelElement.textContent = config.label;
         }
