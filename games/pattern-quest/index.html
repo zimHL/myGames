@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>找规律填空</title>
+    <style>
+        :root {
+            --bg: #f4efe4;
+            --card: rgba(255, 251, 243, 0.92);
+            --card-soft: #fff7ea;
+            --line: rgba(34, 50, 56, 0.12);
+            --text: #223238;
+            --muted: #647379;
+            --accent: #0f766e;
+            --accent-strong: #0b5b55;
+            --warm: #c67a20;
+            --warm-soft: rgba(198, 122, 32, 0.16);
+            --danger: #b45309;
+            --shadow: 0 24px 48px rgba(34, 50, 56, 0.14);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            min-height: 100%;
+        }
+
+        body {
+            padding: 20px;
+            font-family: "Trebuchet MS", "Avenir Next", "Microsoft YaHei", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(198, 122, 32, 0.14), transparent 24%),
+                radial-gradient(circle at right 18% top 12%, rgba(15, 118, 110, 0.15), transparent 22%),
+                linear-gradient(180deg, #f8f4ea 0%, var(--bg) 52%, #efe6d1 100%);
+        }
+
+        .page {
+            width: min(100%, 760px);
+            margin: 0 auto;
+        }
+
+        .card {
+            border: 1px solid var(--line);
+            border-radius: 30px;
+            background: var(--card);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(12px);
+            padding: 24px;
+        }
+
+        .home-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 38px;
+            padding: 0 14px;
+            border-radius: 999px;
+            background: #eef5f4;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        .home-link:hover {
+            background: #e2f0ee;
+        }
+
+        .header {
+            margin-top: 16px;
+        }
+
+        .eyebrow {
+            margin: 0 0 10px;
+            color: var(--accent);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        h1,
+        p {
+            margin: 0;
+        }
+
+        h1 {
+            font-size: clamp(2.3rem, 6vw, 3.2rem);
+            line-height: 0.95;
+            letter-spacing: -0.05em;
+        }
+
+        .intro {
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 1rem;
+            line-height: 1.75;
+        }
+
+        .toolbar {
+            margin-top: 18px;
+            padding: 16px;
+            border-radius: 22px;
+            background: var(--card-soft);
+            border: 1px solid rgba(34, 50, 56, 0.08);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .field label {
+            color: var(--muted);
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        select,
+        button {
+            border: none;
+            font: inherit;
+        }
+
+        select {
+            width: 100%;
+            min-width: 0;
+            min-height: 44px;
+            padding: 0 14px;
+            border-radius: 14px;
+            background: #fffdf8;
+            color: var(--text);
+            box-shadow: inset 0 0 0 1px rgba(34, 50, 56, 0.08);
+            appearance: none;
+        }
+
+        .action {
+            min-height: 44px;
+            padding: 0 18px;
+            border-radius: 14px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: background-color 0.18s ease, transform 0.18s ease;
+            white-space: nowrap;
+        }
+
+        .action.primary {
+            background: var(--accent);
+            color: #f8fbfa;
+        }
+
+        .action.primary:hover {
+            background: var(--accent-strong);
+            transform: translateY(-1px);
+        }
+
+        .meta-strip {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .meta-item {
+            padding: 10px 12px;
+            border-radius: 16px;
+            background: #fffaf0;
+            border: 1px solid rgba(34, 50, 56, 0.08);
+        }
+
+        .meta-label {
+            display: block;
+            color: var(--muted);
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .meta-value {
+            display: block;
+            margin-top: 4px;
+            font-size: 1rem;
+            font-weight: 800;
+            line-height: 1.3;
+        }
+
+        .status-bar {
+            margin-top: 12px;
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: #f8f3e8;
+            border: 1px solid rgba(34, 50, 56, 0.08);
+            font-size: 0.96rem;
+            font-weight: 700;
+        }
+
+        .status-bar[data-state="success"] {
+            background: #edf6f5;
+            color: var(--accent-strong);
+        }
+
+        .status-bar[data-state="error"] {
+            background: #fff4e7;
+            color: var(--danger);
+        }
+
+        .status-bar[data-state="hint"] {
+            background: #f8f3e8;
+            color: var(--text);
+        }
+
+        .question-shell {
+            margin-top: 12px;
+            padding: 12px;
+            border-radius: 22px;
+            background: var(--card-soft);
+            border: 1px solid rgba(34, 50, 56, 0.08);
+        }
+
+        .question-row {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .question-card,
+        .option-card {
+            min-height: 92px;
+            border-radius: 18px;
+            background: #fffdf8;
+            box-shadow: inset 0 0 0 1px rgba(34, 50, 56, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .question-card {
+            padding: 10px 8px;
+            font-size: clamp(1.05rem, 2.5vw, 1.45rem);
+            font-weight: 800;
+            line-height: 1.25;
+        }
+
+        .question-card.missing {
+            border: 2px dashed rgba(15, 118, 110, 0.28);
+            background: #f3faf8;
+            color: var(--accent);
+        }
+
+        .option-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .option-card {
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            font-size: clamp(1rem, 2.4vw, 1.35rem);
+            font-weight: 800;
+            color: var(--text);
+            transition: transform 0.16s ease, background-color 0.16s ease, box-shadow 0.16s ease;
+        }
+
+        .option-card:hover:not(:disabled) {
+            transform: translateY(-1px);
+            background: #fff8ec;
+        }
+
+        .option-card.correct {
+            background: #edf6f5;
+            box-shadow: inset 0 0 0 2px rgba(15, 118, 110, 0.18);
+            color: var(--accent-strong);
+        }
+
+        .option-card.wrong {
+            background: #fff4e7;
+            box-shadow: inset 0 0 0 2px rgba(180, 83, 9, 0.18);
+            color: var(--danger);
+        }
+
+        .option-card:disabled {
+            cursor: default;
+        }
+
+        @media (max-height: 920px) and (min-width: 641px) {
+            body {
+                padding: 12px;
+            }
+
+            .page {
+                width: min(100%, 700px);
+            }
+
+            .card {
+                padding: 16px;
+                border-radius: 24px;
+            }
+
+            .header {
+                margin-top: 12px;
+            }
+
+            .eyebrow,
+            .intro {
+                display: none;
+            }
+
+            h1 {
+                font-size: 2.2rem;
+            }
+
+            .toolbar {
+                margin-top: 12px;
+                padding: 12px;
+                border-radius: 18px;
+                gap: 10px;
+                align-items: center;
+                flex-wrap: nowrap;
+            }
+
+            .field {
+                gap: 4px;
+            }
+
+            .field label {
+                font-size: 0.8rem;
+            }
+
+            select {
+                min-height: 40px;
+                padding: 0 12px;
+                font-size: 0.92rem;
+            }
+
+            .action {
+                min-height: 40px;
+                padding: 0 14px;
+                font-size: 0.88rem;
+            }
+
+            .meta-strip {
+                margin-top: 10px;
+                gap: 8px;
+            }
+
+            .meta-item {
+                padding: 8px 10px;
+                border-radius: 14px;
+            }
+
+            .meta-label {
+                font-size: 0.74rem;
+            }
+
+            .meta-value {
+                font-size: 0.94rem;
+            }
+
+            .status-bar {
+                margin-top: 10px;
+                padding: 10px 12px;
+                border-radius: 14px;
+                font-size: 0.92rem;
+            }
+
+            .question-shell {
+                margin-top: 10px;
+                padding: 10px;
+                border-radius: 18px;
+            }
+
+            .question-row {
+                gap: 6px;
+            }
+
+            .question-card,
+            .option-card {
+                min-height: 76px;
+                border-radius: 14px;
+            }
+
+            .option-grid {
+                margin-top: 10px;
+                gap: 8px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 8px;
+            }
+
+            .card {
+                padding: 12px;
+                border-radius: 18px;
+            }
+
+            .home-link {
+                min-height: 32px;
+                padding: 0 12px;
+                font-size: 0.82rem;
+            }
+
+            .header {
+                margin-top: 10px;
+            }
+
+            .eyebrow,
+            .intro {
+                display: none;
+            }
+
+            h1 {
+                font-size: 1.9rem;
+            }
+
+            .toolbar {
+                margin-top: 12px;
+                padding: 10px;
+                border-radius: 16px;
+                gap: 8px;
+                align-items: center;
+                flex-wrap: nowrap;
+            }
+
+            .field {
+                gap: 4px;
+            }
+
+            .field label {
+                font-size: 0.76rem;
+            }
+
+            select {
+                min-height: 36px;
+                padding: 0 10px;
+                border-radius: 12px;
+                font-size: 0.9rem;
+            }
+
+            .action {
+                min-height: 36px;
+                padding: 0 12px;
+                border-radius: 12px;
+                font-size: 0.86rem;
+            }
+
+            .meta-strip {
+                margin-top: 10px;
+                gap: 8px;
+            }
+
+            .meta-item {
+                padding: 8px 8px;
+                border-radius: 14px;
+            }
+
+            .meta-label {
+                font-size: 0.72rem;
+            }
+
+            .meta-value {
+                font-size: 0.9rem;
+                line-height: 1.2;
+            }
+
+            .status-bar {
+                margin-top: 10px;
+                padding: 9px 10px;
+                border-radius: 14px;
+                font-size: 0.88rem;
+            }
+
+            .question-shell {
+                margin-top: 10px;
+                padding: 8px;
+                border-radius: 16px;
+            }
+
+            .question-row {
+                gap: 6px;
+            }
+
+            .question-card,
+            .option-card {
+                min-height: 64px;
+                border-radius: 12px;
+            }
+
+            .question-card {
+                padding: 8px 4px;
+                font-size: clamp(0.82rem, 3.2vw, 1rem);
+            }
+
+            .option-card {
+                padding: 8px;
+                font-size: clamp(0.88rem, 3.2vw, 1rem);
+            }
+
+            .option-grid {
+                margin-top: 10px;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <main class="card">
+            <a class="home-link" href="../../index.html">返回首页</a>
+
+            <header class="header">
+                <p class="eyebrow">模式识别小游戏</p>
+                <h1>找规律填空</h1>
+                <p class="intro">观察前面的变化规律，从下面的选项里选出最合适的一项，补上最后的空格。</p>
+            </header>
+
+            <section class="toolbar" aria-label="找规律填空设置">
+                <div class="field">
+                    <label for="difficulty">挑战难度</label>
+                    <select id="difficulty" aria-label="挑战难度">
+                        <option value="easy">简单</option>
+                        <option value="medium" selected>中等</option>
+                        <option value="hard">困难</option>
+                    </select>
+                </div>
+                <button class="action primary" id="next-btn" type="button">下一题</button>
+            </section>
+
+            <section class="meta-strip" aria-label="当前进度">
+                <div class="meta-item">
+                    <span class="meta-label">当前难度</span>
+                    <strong class="meta-value" id="difficulty-label">中等</strong>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">答对题数</span>
+                    <strong class="meta-value" id="correct-count">0</strong>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">连续答对</span>
+                    <strong class="meta-value" id="streak-count">0</strong>
+                </div>
+            </section>
+
+            <div class="status-bar" id="status-bar" data-state="hint" aria-live="polite"></div>
+
+            <section class="question-shell" aria-label="规律题目">
+                <div class="question-row" id="question-row"></div>
+                <div class="option-grid" id="option-grid"></div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const DIFFICULTY_CONFIGS = {
+            easy: {
+                label: "简单",
+                generators: ["number-step", "repeat-ab", "count-up"]
+            },
+            medium: {
+                label: "中等",
+                generators: ["number-step", "repeat-abc", "count-up", "arrow-turn"]
+            },
+            hard: {
+                label: "困难",
+                generators: ["number-step-large", "repeat-abc", "count-up-2", "arrow-turn"]
+            }
+        };
+
+        const SYMBOL_POOL = ["🍎", "🍋", "🍇", "🍓", "🍒", "🧩", "🚗", "🐳", "🦋", "⭐"];
+        const ARROWS = ["↑", "→", "↓", "←"];
+
+        const difficultyElement = document.getElementById("difficulty");
+        const nextButton = document.getElementById("next-btn");
+        const difficultyLabelElement = document.getElementById("difficulty-label");
+        const correctCountElement = document.getElementById("correct-count");
+        const streakCountElement = document.getElementById("streak-count");
+        const statusBarElement = document.getElementById("status-bar");
+        const questionRowElement = document.getElementById("question-row");
+        const optionGridElement = document.getElementById("option-grid");
+
+        const state = {
+            difficulty: "medium",
+            correctCount: 0,
+            streakCount: 0,
+            currentQuestion: null,
+            locked: false
+        };
+
+        function getCurrentConfig() {
+            return DIFFICULTY_CONFIGS[state.difficulty] || DIFFICULTY_CONFIGS.medium;
+        }
+
+        function shuffleArray(items) {
+            const shuffled = [...items];
+
+            for (let index = shuffled.length - 1; index > 0; index -= 1) {
+                const swapIndex = Math.floor(Math.random() * (index + 1));
+                [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+            }
+
+            return shuffled;
+        }
+
+        function pickRandom(items) {
+            return items[Math.floor(Math.random() * items.length)];
+        }
+
+        function createOptionSet(correctAnswer, distractors) {
+            const unique = new Set([correctAnswer]);
+
+            distractors.forEach((item) => {
+                if (unique.size < 4) {
+                    unique.add(item);
+                }
+            });
+
+            while (unique.size < 4) {
+                unique.add(`${correctAnswer}-${unique.size}`);
+            }
+
+            return shuffleArray(Array.from(unique)).slice(0, 4);
+        }
+
+        function createNumberStepQuestion(minStart, maxStart, minStep, maxStep) {
+            const start = Math.floor(Math.random() * (maxStart - minStart + 1)) + minStart;
+            const step = Math.floor(Math.random() * (maxStep - minStep + 1)) + minStep;
+            const sequence = Array.from({ length: 5 }, (_, index) => String(start + index * step));
+            const answer = String(start + 5 * step);
+            const distractors = [
+                String(start + 4 * step),
+                String(start + 6 * step),
+                String(answer * 1 + step),
+                String(answer * 1 - step)
+            ];
+            return {
+                items: [...sequence, ""],
+                answer,
+                options: createOptionSet(answer, distractors)
+            };
+        }
+
+        function createRepeatQuestion(symbolCount) {
+            const symbols = shuffleArray(SYMBOL_POOL).slice(0, symbolCount);
+            const items = Array.from({ length: 5 }, (_, index) => symbols[index % symbolCount]);
+            const answer = symbols[5 % symbolCount];
+            const distractors = shuffleArray(SYMBOL_POOL.filter((item) => !symbols.includes(item))).slice(0, 3);
+            return {
+                items: [...items, ""],
+                answer,
+                options: createOptionSet(answer, distractors)
+            };
+        }
+
+        function createCountQuestion(startCount, step) {
+            const symbol = pickRandom(["★", "●", "■", "◆"]);
+            const items = Array.from({ length: 5 }, (_, index) => symbol.repeat(startCount + index * step));
+            const answer = symbol.repeat(startCount + 5 * step);
+            const distractors = [
+                symbol.repeat(Math.max(1, startCount + 4 * step)),
+                symbol.repeat(startCount + 5 * step + step),
+                symbol.repeat(startCount + 5 * step - step)
+            ];
+            return {
+                items: [...items, ""],
+                answer,
+                options: createOptionSet(answer, distractors)
+            };
+        }
+
+        function createArrowTurnQuestion() {
+            const offset = Math.floor(Math.random() * ARROWS.length);
+            const items = Array.from({ length: 5 }, (_, index) => ARROWS[(offset + index) % ARROWS.length]);
+            const answer = ARROWS[(offset + 5) % ARROWS.length];
+            const distractors = ARROWS.filter((item) => item !== answer);
+            return {
+                items: [...items, ""],
+                answer,
+                options: createOptionSet(answer, distractors)
+            };
+        }
+
+        function generateQuestion() {
+            const config = getCurrentConfig();
+            const generator = pickRandom(config.generators);
+
+            if (generator === "number-step") {
+                return createNumberStepQuestion(1, 8, 1, 3);
+            }
+
+            if (generator === "number-step-large") {
+                return createNumberStepQuestion(3, 15, 2, 5);
+            }
+
+            if (generator === "repeat-ab") {
+                return createRepeatQuestion(2);
+            }
+
+            if (generator === "repeat-abc") {
+                return createRepeatQuestion(3);
+            }
+
+            if (generator === "count-up") {
+                return createCountQuestion(1, 1);
+            }
+
+            if (generator === "count-up-2") {
+                return createCountQuestion(2, 1);
+            }
+
+            return createArrowTurnQuestion();
+        }
+
+        function setStatus(message, stateName) {
+            statusBarElement.textContent = message;
+            statusBarElement.dataset.state = stateName || "hint";
+        }
+
+        function updateMeta() {
+            difficultyLabelElement.textContent = getCurrentConfig().label;
+            correctCountElement.textContent = String(state.correctCount);
+            streakCountElement.textContent = String(state.streakCount);
+        }
+
+        function renderQuestion() {
+            questionRowElement.innerHTML = "";
+            optionGridElement.innerHTML = "";
+
+            state.currentQuestion.items.forEach((item) => {
+                const card = document.createElement("div");
+                card.className = "question-card";
+
+                if (!item) {
+                    card.classList.add("missing");
+                    card.textContent = "?";
+                } else {
+                    card.textContent = item;
+                }
+
+                questionRowElement.appendChild(card);
+            });
+
+            state.currentQuestion.options.forEach((option) => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "option-card";
+                button.textContent = option;
+                button.disabled = state.locked;
+                button.addEventListener("click", () => handleAnswer(option, button));
+                optionGridElement.appendChild(button);
+            });
+
+            updateMeta();
+        }
+
+        function nextQuestion() {
+            state.currentQuestion = generateQuestion();
+            state.locked = false;
+            renderQuestion();
+            setStatus("观察前面的变化规律，选出最合适的一项。", "hint");
+        }
+
+        function handleAnswer(selectedOption, buttonElement) {
+            if (state.locked) {
+                return;
+            }
+
+            state.locked = true;
+            const isCorrect = selectedOption === state.currentQuestion.answer;
+            const optionButtons = Array.from(optionGridElement.querySelectorAll(".option-card"));
+
+            optionButtons.forEach((button) => {
+                button.disabled = true;
+                if (button.textContent === state.currentQuestion.answer) {
+                    button.classList.add("correct");
+                }
+            });
+
+            if (isCorrect) {
+                state.correctCount += 1;
+                state.streakCount += 1;
+                buttonElement.classList.add("correct");
+                setStatus("答对了，继续下一题。", "success");
+            } else {
+                state.streakCount = 0;
+                buttonElement.classList.add("wrong");
+                setStatus(`再看看，正确答案是 ${state.currentQuestion.answer}。`, "error");
+            }
+
+            updateMeta();
+        }
+
+        difficultyElement.addEventListener("change", () => {
+            state.difficulty = difficultyElement.value;
+            nextQuestion();
+        });
+
+        nextButton.addEventListener("click", nextQuestion);
+
+        nextQuestion();
+    </script>
+</body>
+</html>

@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>点灯游戏</title>
+    <style>
+        :root {
+            --bg: #f4efe4;
+            --card: rgba(255, 251, 243, 0.92);
+            --card-soft: #fff7ea;
+            --line: rgba(34, 50, 56, 0.12);
+            --text: #223238;
+            --muted: #647379;
+            --accent: #0f766e;
+            --accent-strong: #0b5b55;
+            --warm: #c67a20;
+            --warm-soft: rgba(198, 122, 32, 0.18);
+            --shadow: 0 24px 48px rgba(34, 50, 56, 0.14);
+            --tile-off: #fffdf8;
+            --tile-on: #ffe7b5;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            min-height: 100%;
+        }
+
+        body {
+            padding: 20px;
+            font-family: "Trebuchet MS", "Avenir Next", "Microsoft YaHei", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(198, 122, 32, 0.14), transparent 24%),
+                radial-gradient(circle at right 18% top 12%, rgba(15, 118, 110, 0.15), transparent 22%),
+                linear-gradient(180deg, #f8f4ea 0%, var(--bg) 52%, #efe6d1 100%);
+        }
+
+        .page {
+            width: min(100%, 760px);
+            margin: 0 auto;
+        }
+
+        .card {
+            border: 1px solid var(--line);
+            border-radius: 30px;
+            background: var(--card);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(12px);
+            padding: 24px;
+        }
+
+        .home-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 38px;
+            padding: 0 14px;
+            border-radius: 999px;
+            background: #eef5f4;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        .home-link:hover {
+            background: #e2f0ee;
+        }
+
+        .header {
+            margin-top: 16px;
+        }
+
+        .eyebrow {
+            margin: 0 0 10px;
+            color: var(--accent);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        h1,
+        p {
+            margin: 0;
+        }
+
+        h1 {
+            font-size: clamp(2.3rem, 6vw, 3.2rem);
+            line-height: 0.95;
+            letter-spacing: -0.05em;
+        }
+
+        .intro {
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 1rem;
+            line-height: 1.75;
+        }
+
+        .toolbar {
+            margin-top: 18px;
+            padding: 16px;
+            border-radius: 22px;
+            background: var(--card-soft);
+            border: 1px solid rgba(34, 50, 56, 0.08);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .field label {
+            color: var(--muted);
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        select,
+        button {
+            border: none;
+            font: inherit;
+        }
+
+        select {
+            width: 100%;
+            min-width: 0;
+            min-height: 44px;
+            padding: 0 14px;
+            border-radius: 14px;
+            background: #fffdf8;
+            color: var(--text);
+            box-shadow: inset 0 0 0 1px rgba(34, 50, 56, 0.08);
+            appearance: none;
+        }
+
+        .action {
+            min-height: 44px;
+            padding: 0 18px;
+            border-radius: 14px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: background-color 0.18s ease, transform 0.18s ease;
+            white-space: nowrap;
+        }
+
+        .action.primary {
+            background: var(--accent);
+            color: #f8fbfa;
+        }
+
+        .action.primary:hover {
+            background: var(--accent-strong);
+            transform: translateY(-1px);
+        }
+
+        .action.secondary {
+            background: #f0eadf;
+            color: var(--text);
+        }
+
+        .action.secondary:hover {
+            background: #e8ddcc;
+            transform: translateY(-1px);
+        }
+
+        .meta-strip {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .meta-item {
+            padding: 10px 12px;
+            border-radius: 16px;
+            background: #fffaf0;
+            border: 1px solid rgba(34, 50, 56, 0.08);
+        }
+
+        .meta-label {
+            display: block;
+            color: var(--muted);
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .meta-value {
+            display: block;
+            margin-top: 4px;
+            font-size: 1rem;
+            font-weight: 800;
+            line-height: 1.3;
+        }
+
+        .status-bar {
+            margin-top: 12px;
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: #f8f3e8;
+            border: 1px solid rgba(34, 50, 56, 0.08);
+            font-size: 0.96rem;
+            font-weight: 700;
+        }
+
+        .status-bar[data-state="success"] {
+            background: #edf6f5;
+            color: var(--accent-strong);
+        }
+
+        .status-bar[data-state="hint"] {
+            background: #fff4e7;
+            color: var(--warm);
+        }
+
+        .board-shell {
+            margin-top: 12px;
+            padding: 12px;
+            border-radius: 22px;
+            background: var(--card-soft);
+            border: 1px solid rgba(34, 50, 56, 0.08);
+            display: flex;
+            justify-content: center;
+        }
+
+        .board {
+            width: min(100%, 520px, calc(100vh - 260px));
+            aspect-ratio: 1;
+            display: grid;
+            gap: 8px;
+        }
+
+        .light {
+            border: none;
+            border-radius: 18px;
+            background: var(--tile-off);
+            box-shadow: inset 0 0 0 1px rgba(34, 50, 56, 0.08);
+            cursor: pointer;
+            transition: transform 0.16s ease, background-color 0.16s ease, box-shadow 0.16s ease;
+            position: relative;
+        }
+
+        .light:hover:not(:disabled) {
+            transform: translateY(-1px);
+        }
+
+        .light::before {
+            content: "";
+            position: absolute;
+            inset: 22%;
+            border-radius: 50%;
+            background: rgba(34, 50, 56, 0.12);
+            transition: background-color 0.16s ease, box-shadow 0.16s ease;
+        }
+
+        .light.on {
+            background: var(--tile-on);
+            box-shadow: inset 0 0 0 2px rgba(198, 122, 32, 0.2);
+        }
+
+        .light.on::before {
+            background: var(--warm);
+            box-shadow: 0 0 0 5px var(--warm-soft);
+        }
+
+        @media (max-height: 920px) and (min-width: 641px) {
+            body {
+                padding: 12px;
+            }
+
+            .page {
+                width: min(100%, 700px);
+            }
+
+            .card {
+                padding: 16px;
+                border-radius: 24px;
+            }
+
+            .header {
+                margin-top: 12px;
+            }
+
+            .eyebrow,
+            .intro {
+                display: none;
+            }
+
+            h1 {
+                font-size: 2.2rem;
+            }
+
+            .toolbar {
+                margin-top: 12px;
+                padding: 12px;
+                border-radius: 18px;
+                gap: 10px;
+                align-items: center;
+                flex-wrap: nowrap;
+            }
+
+            .field {
+                gap: 4px;
+            }
+
+            .field label {
+                font-size: 0.8rem;
+            }
+
+            select {
+                min-height: 40px;
+                padding: 0 12px;
+                font-size: 0.92rem;
+            }
+
+            .action {
+                min-height: 40px;
+                padding: 0 14px;
+                font-size: 0.88rem;
+            }
+
+            .meta-strip {
+                margin-top: 10px;
+                gap: 8px;
+            }
+
+            .meta-item {
+                padding: 8px 10px;
+                border-radius: 14px;
+            }
+
+            .meta-label {
+                font-size: 0.74rem;
+            }
+
+            .meta-value {
+                font-size: 0.94rem;
+            }
+
+            .status-bar {
+                margin-top: 10px;
+                padding: 10px 12px;
+                border-radius: 14px;
+                font-size: 0.92rem;
+            }
+
+            .board-shell {
+                margin-top: 10px;
+                padding: 10px;
+                border-radius: 18px;
+            }
+
+            .board {
+                width: min(100%, 500px, calc(100vh - 200px));
+                gap: 6px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 8px;
+            }
+
+            .card {
+                padding: 12px;
+                border-radius: 18px;
+            }
+
+            .home-link {
+                min-height: 32px;
+                padding: 0 12px;
+                font-size: 0.82rem;
+            }
+
+            .header {
+                margin-top: 10px;
+            }
+
+            .eyebrow,
+            .intro {
+                display: none;
+            }
+
+            h1 {
+                font-size: 1.9rem;
+            }
+
+            .toolbar {
+                margin-top: 12px;
+                padding: 10px;
+                border-radius: 16px;
+                gap: 8px;
+                align-items: center;
+                flex-wrap: nowrap;
+            }
+
+            .field {
+                gap: 4px;
+            }
+
+            .field label {
+                font-size: 0.76rem;
+            }
+
+            select {
+                min-height: 36px;
+                padding: 0 10px;
+                border-radius: 12px;
+                font-size: 0.9rem;
+            }
+
+            .action {
+                min-height: 36px;
+                padding: 0 10px;
+                border-radius: 12px;
+                font-size: 0.84rem;
+            }
+
+            .meta-strip {
+                margin-top: 10px;
+                gap: 8px;
+            }
+
+            .meta-item {
+                padding: 8px 8px;
+                border-radius: 14px;
+            }
+
+            .meta-label {
+                font-size: 0.72rem;
+            }
+
+            .meta-value {
+                font-size: 0.9rem;
+                line-height: 1.2;
+            }
+
+            .status-bar {
+                margin-top: 10px;
+                padding: 9px 10px;
+                border-radius: 14px;
+                font-size: 0.88rem;
+            }
+
+            .board-shell {
+                margin-top: 10px;
+                padding: 8px;
+                border-radius: 16px;
+            }
+
+            .board {
+                width: min(100%, calc(100vh - 220px));
+                gap: 4px;
+            }
+
+            .light {
+                border-radius: 12px;
+            }
+
+            .light.on::before {
+                box-shadow: 0 0 0 4px var(--warm-soft);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <main class="card">
+            <a class="home-link" href="../../index.html">返回首页</a>
+
+            <header class="header">
+                <p class="eyebrow">因果推理小游戏</p>
+                <h1>点灯游戏</h1>
+                <p class="intro">点击一个格子，会同时切换自己和上下左右。想办法把所有亮灯都关掉。</p>
+            </header>
+
+            <section class="toolbar" aria-label="点灯游戏设置">
+                <div class="field">
+                    <label for="difficulty">挑战难度</label>
+                    <select id="difficulty" aria-label="挑战难度">
+                        <option value="easy">简单 4 x 4</option>
+                        <option value="medium" selected>中等 5 x 5</option>
+                        <option value="hard">困难 6 x 6</option>
+                    </select>
+                </div>
+                <button class="action primary" id="restart-btn" type="button">生成新局</button>
+                <button class="action secondary" id="reset-btn" type="button">重置本局</button>
+            </section>
+
+            <section class="meta-strip" aria-label="当前进度">
+                <div class="meta-item">
+                    <span class="meta-label">棋盘大小</span>
+                    <strong class="meta-value" id="size-label">5 x 5</strong>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">已点次数</span>
+                    <strong class="meta-value" id="move-count">0</strong>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">剩余亮灯</span>
+                    <strong class="meta-value" id="lit-count">0</strong>
+                </div>
+            </section>
+
+            <div class="status-bar" id="status-bar" data-state="hint" aria-live="polite"></div>
+
+            <section class="board-shell">
+                <div class="board" id="board" aria-label="点灯棋盘"></div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const DIFFICULTY_CONFIGS = {
+            easy: {
+                label: "4 x 4",
+                size: 4,
+                randomMoves: 8
+            },
+            medium: {
+                label: "5 x 5",
+                size: 5,
+                randomMoves: 14
+            },
+            hard: {
+                label: "6 x 6",
+                size: 6,
+                randomMoves: 22
+            }
+        };
+
+        const difficultyElement = document.getElementById("difficulty");
+        const restartButton = document.getElementById("restart-btn");
+        const resetButton = document.getElementById("reset-btn");
+        const boardElement = document.getElementById("board");
+        const sizeLabelElement = document.getElementById("size-label");
+        const moveCountElement = document.getElementById("move-count");
+        const litCountElement = document.getElementById("lit-count");
+        const statusBarElement = document.getElementById("status-bar");
+
+        const state = {
+            difficulty: "medium",
+            size: 5,
+            board: [],
+            initialBoard: [],
+            moves: 0,
+            won: false
+        };
+
+        function getCurrentConfig() {
+            return DIFFICULTY_CONFIGS[state.difficulty] || DIFFICULTY_CONFIGS.medium;
+        }
+
+        function createBoard(size, fillValue) {
+            return Array.from({ length: size }, () => Array(size).fill(fillValue));
+        }
+
+        function cloneBoard(board) {
+            return board.map((row) => [...row]);
+        }
+
+        function countLit(board) {
+            return board.flat().filter(Boolean).length;
+        }
+
+        function toggleLight(board, row, col) {
+            if (!board[row] || typeof board[row][col] === "undefined") {
+                return;
+            }
+
+            board[row][col] = !board[row][col];
+        }
+
+        function applyPress(board, row, col) {
+            toggleLight(board, row, col);
+            toggleLight(board, row - 1, col);
+            toggleLight(board, row + 1, col);
+            toggleLight(board, row, col - 1);
+            toggleLight(board, row, col + 1);
+        }
+
+        function createPuzzle() {
+            const config = getCurrentConfig();
+            const board = createBoard(config.size, false);
+
+            for (let index = 0; index < config.randomMoves; index += 1) {
+                const row = Math.floor(Math.random() * config.size);
+                const col = Math.floor(Math.random() * config.size);
+                applyPress(board, row, col);
+            }
+
+            if (countLit(board) === 0) {
+                applyPress(board, Math.floor(config.size / 2), Math.floor(config.size / 2));
+            }
+
+            return board;
+        }
+
+        function updateMeta() {
+            sizeLabelElement.textContent = `${state.size} x ${state.size}`;
+            moveCountElement.textContent = String(state.moves);
+            litCountElement.textContent = String(countLit(state.board));
+        }
+
+        function setStatus(message, stateName) {
+            statusBarElement.textContent = message;
+            statusBarElement.dataset.state = stateName || "hint";
+        }
+
+        function renderBoard() {
+            boardElement.innerHTML = "";
+            boardElement.style.gridTemplateColumns = `repeat(${state.size}, minmax(0, 1fr))`;
+
+            for (let row = 0; row < state.size; row += 1) {
+                for (let col = 0; col < state.size; col += 1) {
+                    const button = document.createElement("button");
+                    button.type = "button";
+                    button.className = "light";
+                    button.setAttribute("aria-label", state.board[row][col] ? "亮灯" : "灭灯");
+                    button.disabled = state.won;
+
+                    if (state.board[row][col]) {
+                        button.classList.add("on");
+                    }
+
+                    button.addEventListener("click", () => handlePress(row, col));
+                    boardElement.appendChild(button);
+                }
+            }
+
+            updateMeta();
+        }
+
+        function resetCurrentBoard() {
+            state.board = cloneBoard(state.initialBoard);
+            state.moves = 0;
+            state.won = false;
+            renderBoard();
+            setStatus("继续尝试，把所有亮灯都关掉。", "hint");
+        }
+
+        function startNewGame() {
+            const config = getCurrentConfig();
+            state.size = config.size;
+            state.board = createPuzzle();
+            state.initialBoard = cloneBoard(state.board);
+            state.moves = 0;
+            state.won = false;
+
+            renderBoard();
+            setStatus("点击任意格子，目标是把所有亮灯都关掉。", "hint");
+        }
+
+        function handlePress(row, col) {
+            if (state.won) {
+                return;
+            }
+
+            applyPress(state.board, row, col);
+            state.moves += 1;
+            renderBoard();
+
+            if (countLit(state.board) === 0) {
+                state.won = true;
+                renderBoard();
+                setStatus(`全部熄灭了，一共用了 ${state.moves} 次。`, "success");
+                return;
+            }
+
+            setStatus("继续观察每一步的连锁变化。", "hint");
+        }
+
+        difficultyElement.addEventListener("change", () => {
+            state.difficulty = difficultyElement.value;
+            startNewGame();
+        });
+
+        restartButton.addEventListener("click", startNewGame);
+        resetButton.addEventListener("click", resetCurrentBoard);
+
+        startNewGame();
+    </script>
+</body>
+</html>

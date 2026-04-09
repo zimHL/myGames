@@ -1,0 +1,810 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>迷宫寻路</title>
+    <style>
+        :root {
+            --bg: #f4efe4;
+            --card: rgba(255, 251, 243, 0.92);
+            --card-soft: #fff7ea;
+            --line: rgba(34, 50, 56, 0.12);
+            --text: #223238;
+            --muted: #647379;
+            --accent: #0f766e;
+            --accent-strong: #0b5b55;
+            --warm: #c67a20;
+            --warm-soft: rgba(198, 122, 32, 0.16);
+            --shadow: 0 24px 48px rgba(34, 50, 56, 0.14);
+            --wall: #223238;
+            --path: #fffdf8;
+            --visited: #f5ecde;
+            --available: #eef5f4;
+            --exit: #dff3ef;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            min-height: 100%;
+        }
+
+        body {
+            padding: 20px;
+            font-family: "Trebuchet MS", "Avenir Next", "Microsoft YaHei", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(198, 122, 32, 0.14), transparent 24%),
+                radial-gradient(circle at right 18% top 12%, rgba(15, 118, 110, 0.15), transparent 22%),
+                linear-gradient(180deg, #f8f4ea 0%, var(--bg) 52%, #efe6d1 100%);
+        }
+
+        .page {
+            width: min(100%, 760px);
+            margin: 0 auto;
+        }
+
+        .card {
+            border: 1px solid var(--line);
+            border-radius: 30px;
+            background: var(--card);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(12px);
+            padding: 24px;
+        }
+
+        .home-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 38px;
+            padding: 0 14px;
+            border-radius: 999px;
+            background: #eef5f4;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        .home-link:hover {
+            background: #e2f0ee;
+        }
+
+        .header {
+            margin-top: 16px;
+        }
+
+        .eyebrow {
+            margin: 0 0 10px;
+            color: var(--accent);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        h1,
+        p {
+            margin: 0;
+        }
+
+        h1 {
+            font-size: clamp(2.3rem, 6vw, 3.2rem);
+            line-height: 0.95;
+            letter-spacing: -0.05em;
+        }
+
+        .intro {
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 1rem;
+            line-height: 1.75;
+        }
+
+        .toolbar {
+            margin-top: 18px;
+            padding: 16px;
+            border-radius: 22px;
+            background: var(--card-soft);
+            border: 1px solid rgba(34, 50, 56, 0.08);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .field label {
+            color: var(--muted);
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        select,
+        button {
+            border: none;
+            font: inherit;
+        }
+
+        select {
+            width: 100%;
+            min-width: 0;
+            min-height: 44px;
+            padding: 0 14px;
+            border-radius: 14px;
+            background: #fffdf8;
+            color: var(--text);
+            box-shadow: inset 0 0 0 1px rgba(34, 50, 56, 0.08);
+            appearance: none;
+        }
+
+        .action {
+            min-height: 44px;
+            padding: 0 18px;
+            border-radius: 14px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: background-color 0.18s ease, transform 0.18s ease;
+            white-space: nowrap;
+        }
+
+        .action.primary {
+            background: var(--accent);
+            color: #f8fbfa;
+        }
+
+        .action.primary:hover {
+            background: var(--accent-strong);
+            transform: translateY(-1px);
+        }
+
+        .meta-strip {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .meta-item {
+            padding: 10px 12px;
+            border-radius: 16px;
+            background: #fffaf0;
+            border: 1px solid rgba(34, 50, 56, 0.08);
+        }
+
+        .meta-label {
+            display: block;
+            color: var(--muted);
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .meta-value {
+            display: block;
+            margin-top: 4px;
+            font-size: 1rem;
+            font-weight: 800;
+            line-height: 1.3;
+        }
+
+        .status-bar {
+            margin-top: 12px;
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: #f8f3e8;
+            border: 1px solid rgba(34, 50, 56, 0.08);
+            font-size: 0.96rem;
+            font-weight: 700;
+        }
+
+        .status-bar[data-state="success"] {
+            background: #edf6f5;
+            color: var(--accent-strong);
+        }
+
+        .status-bar[data-state="hint"] {
+            background: #fff4e7;
+            color: var(--warm);
+        }
+
+        .maze-shell {
+            margin-top: 12px;
+            padding: 12px;
+            border-radius: 22px;
+            background: var(--card-soft);
+            border: 1px solid rgba(34, 50, 56, 0.08);
+            display: flex;
+            justify-content: center;
+        }
+
+        .maze-board {
+            width: min(100%, 520px, calc(100vh - 260px));
+            aspect-ratio: 1;
+            display: grid;
+            gap: 2px;
+            touch-action: none;
+        }
+
+        .maze-cell {
+            position: relative;
+            border-radius: 4px;
+            background: var(--path);
+            transition: background-color 0.16s ease, transform 0.16s ease;
+        }
+
+        .maze-cell.wall {
+            background: var(--wall);
+            border-radius: 2px;
+        }
+
+        .maze-cell.visited {
+            background: var(--visited);
+        }
+
+        .maze-cell.available {
+            background: var(--available);
+            box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.14);
+            cursor: pointer;
+        }
+
+        .maze-cell.start {
+            box-shadow: inset 0 0 0 2px rgba(198, 122, 32, 0.32);
+        }
+
+        .maze-cell.exit {
+            background: var(--exit);
+        }
+
+        .maze-cell.exit::after {
+            content: "";
+            position: absolute;
+            inset: 24%;
+            border-radius: 50%;
+            background: rgba(15, 118, 110, 0.82);
+        }
+
+        .maze-cell.player::before {
+            content: "";
+            position: absolute;
+            inset: 18%;
+            border-radius: 50%;
+            background: var(--warm);
+            box-shadow: 0 0 0 4px var(--warm-soft);
+        }
+
+        @media (max-height: 920px) and (min-width: 641px) {
+            body {
+                padding: 12px;
+            }
+
+            .page {
+                width: min(100%, 700px);
+            }
+
+            .card {
+                padding: 16px;
+                border-radius: 24px;
+            }
+
+            .header {
+                margin-top: 12px;
+            }
+
+            .eyebrow,
+            .intro {
+                display: none;
+            }
+
+            h1 {
+                font-size: 2.2rem;
+            }
+
+            .toolbar {
+                margin-top: 12px;
+                padding: 12px;
+                border-radius: 18px;
+                gap: 10px;
+                align-items: center;
+                flex-wrap: nowrap;
+            }
+
+            .field {
+                gap: 4px;
+            }
+
+            .field label {
+                font-size: 0.8rem;
+            }
+
+            select {
+                min-height: 40px;
+                padding: 0 12px;
+                font-size: 0.92rem;
+            }
+
+            .action {
+                min-height: 40px;
+                padding: 0 14px;
+                font-size: 0.88rem;
+            }
+
+            .meta-strip {
+                margin-top: 10px;
+                gap: 8px;
+            }
+
+            .meta-item {
+                padding: 8px 10px;
+                border-radius: 14px;
+            }
+
+            .meta-label {
+                font-size: 0.72rem;
+            }
+
+            .meta-value {
+                font-size: 0.94rem;
+            }
+
+            .status-bar {
+                margin-top: 10px;
+                padding: 10px 12px;
+                border-radius: 14px;
+                font-size: 0.92rem;
+            }
+
+            .maze-shell {
+                margin-top: 10px;
+                padding: 10px;
+                border-radius: 18px;
+            }
+
+            .maze-board {
+                width: min(100%, 500px, calc(100vh - 200px));
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 8px;
+            }
+
+            .card {
+                padding: 12px;
+                border-radius: 18px;
+            }
+
+            .home-link {
+                min-height: 32px;
+                padding: 0 12px;
+                font-size: 0.82rem;
+            }
+
+            .header {
+                margin-top: 10px;
+            }
+
+            .eyebrow,
+            .intro {
+                display: none;
+            }
+
+            h1 {
+                font-size: 1.9rem;
+            }
+
+            .toolbar {
+                margin-top: 12px;
+                padding: 10px;
+                border-radius: 16px;
+                gap: 8px;
+                align-items: center;
+                flex-wrap: nowrap;
+            }
+
+            .field {
+                gap: 4px;
+            }
+
+            .field label {
+                font-size: 0.76rem;
+            }
+
+            select {
+                min-height: 36px;
+                padding: 0 10px;
+                border-radius: 12px;
+                font-size: 0.9rem;
+            }
+
+            .action {
+                min-height: 36px;
+                padding: 0 12px;
+                border-radius: 12px;
+                font-size: 0.86rem;
+            }
+
+            .meta-strip {
+                margin-top: 10px;
+                gap: 8px;
+            }
+
+            .meta-item {
+                padding: 8px 8px;
+                border-radius: 14px;
+            }
+
+            .meta-label {
+                font-size: 0.72rem;
+            }
+
+            .meta-value {
+                font-size: 0.9rem;
+                line-height: 1.2;
+            }
+
+            .status-bar {
+                margin-top: 10px;
+                padding: 9px 10px;
+                border-radius: 14px;
+                font-size: 0.88rem;
+            }
+
+            .maze-shell {
+                margin-top: 10px;
+                padding: 8px;
+                border-radius: 16px;
+            }
+
+            .maze-board {
+                width: min(100%, calc(100vh - 220px));
+                gap: 1px;
+            }
+
+            .maze-cell {
+                border-radius: 2px;
+            }
+
+            .maze-cell.player::before {
+                inset: 22%;
+                box-shadow: 0 0 0 3px var(--warm-soft);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <main class="card">
+            <a class="home-link" href="../../index.html">返回首页</a>
+
+            <header class="header">
+                <p class="eyebrow">空间训练小游戏</p>
+                <h1>迷宫寻路</h1>
+                <p class="intro">从起点出发，一步一步走到出口。可以点击相邻格、使用方向键，或者在棋盘上滑动。</p>
+            </header>
+
+            <section class="toolbar" aria-label="迷宫设置">
+                <div class="field">
+                    <label for="difficulty">挑战难度</label>
+                    <select id="difficulty" aria-label="挑战难度">
+                        <option value="easy">简单</option>
+                        <option value="medium" selected>中等</option>
+                        <option value="hard">困难</option>
+                    </select>
+                </div>
+                <button class="action primary" id="restart-btn" type="button">生成新迷宫</button>
+            </section>
+
+            <section class="meta-strip" aria-label="当前进度">
+                <div class="meta-item">
+                    <span class="meta-label">迷宫大小</span>
+                    <strong class="meta-value" id="maze-size-label">15 x 15</strong>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">已走步数</span>
+                    <strong class="meta-value" id="step-count">0</strong>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">目标</span>
+                    <strong class="meta-value">走到绿色出口</strong>
+                </div>
+            </section>
+
+            <div class="status-bar" id="status-bar" data-state="hint" aria-live="polite"></div>
+
+            <section class="maze-shell">
+                <div class="maze-board" id="maze-board" aria-label="杩峰妫嬬洏"></div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const DIFFICULTY_CONFIGS = {
+            easy: {
+                label: "简单",
+                size: 11
+            },
+            medium: {
+                label: "中等",
+                size: 15
+            },
+            hard: {
+                label: "困难",
+                size: 19
+            }
+        };
+
+        const DIRECTIONS = [
+            { row: -1, col: 0, name: "up" },
+            { row: 1, col: 0, name: "down" },
+            { row: 0, col: -1, name: "left" },
+            { row: 0, col: 1, name: "right" }
+        ];
+
+        const difficultyElement = document.getElementById("difficulty");
+        const restartButton = document.getElementById("restart-btn");
+        const mazeBoardElement = document.getElementById("maze-board");
+        const mazeSizeLabelElement = document.getElementById("maze-size-label");
+        const stepCountElement = document.getElementById("step-count");
+        const statusBarElement = document.getElementById("status-bar");
+
+        const state = {
+            difficulty: "medium",
+            maze: [],
+            size: 15,
+            playerRow: 1,
+            playerCol: 1,
+            exitRow: 13,
+            exitCol: 13,
+            steps: 0,
+            visited: new Set(["1-1"]),
+            won: false,
+            touchStartX: 0,
+            touchStartY: 0
+        };
+
+        function getCurrentConfig() {
+            return DIFFICULTY_CONFIGS[state.difficulty] || DIFFICULTY_CONFIGS.medium;
+        }
+
+        function createGrid(size, fillValue) {
+            return Array.from({ length: size }, () => Array(size).fill(fillValue));
+        }
+
+        function shuffleArray(items) {
+            const shuffled = [...items];
+
+            for (let index = shuffled.length - 1; index > 0; index -= 1) {
+                const swapIndex = Math.floor(Math.random() * (index + 1));
+                [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+            }
+
+            return shuffled;
+        }
+
+        function generateMaze(size) {
+            const maze = createGrid(size, 1);
+
+            function carve(row, col) {
+                maze[row][col] = 0;
+
+                const directions = shuffleArray([
+                    { row: -2, col: 0 },
+                    { row: 2, col: 0 },
+                    { row: 0, col: -2 },
+                    { row: 0, col: 2 }
+                ]);
+
+                directions.forEach((direction) => {
+                    const nextRow = row + direction.row;
+                    const nextCol = col + direction.col;
+
+                    if (nextRow <= 0 || nextRow >= size - 1 || nextCol <= 0 || nextCol >= size - 1) {
+                        return;
+                    }
+
+                    if (maze[nextRow][nextCol] === 0) {
+                        return;
+                    }
+
+                    maze[row + direction.row / 2][col + direction.col / 2] = 0;
+                    carve(nextRow, nextCol);
+                });
+            }
+
+            carve(1, 1);
+            maze[1][1] = 0;
+            maze[size - 2][size - 2] = 0;
+            maze[size - 2][size - 3] = 0;
+
+            return maze;
+        }
+
+        function getAvailableMoves(row, col) {
+            return DIRECTIONS.filter((direction) => {
+                const nextRow = row + direction.row;
+                const nextCol = col + direction.col;
+                return state.maze[nextRow] && state.maze[nextRow][nextCol] === 0;
+            });
+        }
+
+        function updateMeta() {
+            mazeSizeLabelElement.textContent = `${state.size} x ${state.size}`;
+            stepCountElement.textContent = String(state.steps);
+        }
+
+        function setStatus(message, stateName) {
+            statusBarElement.textContent = message;
+            statusBarElement.dataset.state = stateName || "hint";
+        }
+
+        function renderMaze() {
+            const availableLookup = new Set(
+                getAvailableMoves(state.playerRow, state.playerCol)
+                    .map((direction) => `${state.playerRow + direction.row}-${state.playerCol + direction.col}`)
+            );
+
+            mazeBoardElement.innerHTML = "";
+            mazeBoardElement.style.gridTemplateColumns = `repeat(${state.size}, minmax(0, 1fr))`;
+
+            for (let row = 0; row < state.size; row += 1) {
+                for (let col = 0; col < state.size; col += 1) {
+                    const cell = document.createElement("div");
+                    const isWall = state.maze[row][col] === 1;
+                    const cellKey = `${row}-${col}`;
+
+                    cell.className = "maze-cell";
+                    cell.dataset.row = String(row);
+                    cell.dataset.col = String(col);
+
+                    if (isWall) {
+                        cell.classList.add("wall");
+                    } else {
+                        if (state.visited.has(cellKey)) {
+                            cell.classList.add("visited");
+                        }
+
+                        if (availableLookup.has(cellKey) && !state.won) {
+                            cell.classList.add("available");
+                            cell.addEventListener("click", () => {
+                                movePlayer(row - state.playerRow, col - state.playerCol);
+                            });
+                        }
+                    }
+
+                    if (row === 1 && col === 1) {
+                        cell.classList.add("start");
+                    }
+
+                    if (row === state.exitRow && col === state.exitCol) {
+                        cell.classList.add("exit");
+                    }
+
+                    if (row === state.playerRow && col === state.playerCol) {
+                        cell.classList.add("player");
+                    }
+
+                    mazeBoardElement.appendChild(cell);
+                }
+            }
+
+            updateMeta();
+        }
+
+        function resetGame() {
+            const config = getCurrentConfig();
+            state.size = config.size;
+            state.maze = generateMaze(config.size);
+            state.playerRow = 1;
+            state.playerCol = 1;
+            state.exitRow = config.size - 2;
+            state.exitCol = config.size - 2;
+            state.steps = 0;
+            state.visited = new Set(["1-1"]);
+            state.won = false;
+
+            renderMaze();
+            setStatus("从橙色圆点出发，走到绿色出口。", "hint");
+        }
+
+        function tryFinish() {
+            if (state.playerRow !== state.exitRow || state.playerCol !== state.exitCol) {
+                return;
+            }
+
+            state.won = true;
+            renderMaze();
+            setStatus(`你成功走出了迷宫，一共走了 ${state.steps} 步。`, "success");
+        }
+
+        function movePlayer(deltaRow, deltaCol) {
+            if (state.won) {
+                return;
+            }
+
+            const nextRow = state.playerRow + deltaRow;
+            const nextCol = state.playerCol + deltaCol;
+
+            if (!state.maze[nextRow] || state.maze[nextRow][nextCol] !== 0) {
+                return;
+            }
+
+            state.playerRow = nextRow;
+            state.playerCol = nextCol;
+            state.steps += 1;
+            state.visited.add(`${nextRow}-${nextCol}`);
+            renderMaze();
+            tryFinish();
+
+            if (!state.won) {
+                setStatus("继续前进，找到通向出口的路。", "hint");
+            }
+        }
+
+        function handleKeydown(event) {
+            const key = event.key.toLowerCase();
+
+            if (key === "arrowup" || key === "w") {
+                event.preventDefault();
+                movePlayer(-1, 0);
+            } else if (key === "arrowdown" || key === "s") {
+                event.preventDefault();
+                movePlayer(1, 0);
+            } else if (key === "arrowleft" || key === "a") {
+                event.preventDefault();
+                movePlayer(0, -1);
+            } else if (key === "arrowright" || key === "d") {
+                event.preventDefault();
+                movePlayer(0, 1);
+            }
+        }
+
+        function handleTouchStart(event) {
+            const touch = event.changedTouches[0];
+            state.touchStartX = touch.clientX;
+            state.touchStartY = touch.clientY;
+        }
+
+        function handleTouchEnd(event) {
+            const touch = event.changedTouches[0];
+            const deltaX = touch.clientX - state.touchStartX;
+            const deltaY = touch.clientY - state.touchStartY;
+
+            if (Math.abs(deltaX) < 18 && Math.abs(deltaY) < 18) {
+                return;
+            }
+
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                movePlayer(0, deltaX > 0 ? 1 : -1);
+            } else {
+                movePlayer(deltaY > 0 ? 1 : -1, 0);
+            }
+        }
+
+        difficultyElement.addEventListener("change", () => {
+            state.difficulty = difficultyElement.value;
+            resetGame();
+        });
+
+        restartButton.addEventListener("click", resetGame);
+        mazeBoardElement.addEventListener("touchstart", handleTouchStart, { passive: true });
+        mazeBoardElement.addEventListener("touchend", handleTouchEnd, { passive: true });
+        window.addEventListener("keydown", handleKeydown);
+
+        resetGame();
+    </script>
+</body>
+</html>
