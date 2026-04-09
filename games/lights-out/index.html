@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -511,8 +511,8 @@
                     <strong class="meta-value" id="move-count">0</strong>
                 </div>
                 <div class="meta-item">
-                    <span class="meta-label">剩余亮灯</span>
-                    <strong class="meta-value" id="lit-count">0</strong>
+                    <span class="meta-label">当前亮灯</span>
+                    <strong class="meta-value" id="lit-count">0 / 25</strong>
                 </div>
             </section>
 
@@ -613,7 +613,7 @@
         function updateMeta() {
             sizeLabelElement.textContent = `${state.size} x ${state.size}`;
             moveCountElement.textContent = String(state.moves);
-            litCountElement.textContent = String(countLit(state.board));
+            litCountElement.textContent = `${countLit(state.board)} / ${state.size * state.size}`;
         }
 
         function setStatus(message, stateName) {
@@ -674,10 +674,17 @@
             state.moves += 1;
             renderBoard();
 
-            if (countLit(state.board) === 0) {
+            const litCount = countLit(state.board);
+
+            if (litCount === 0) {
                 state.won = true;
                 renderBoard();
                 setStatus(`全部熄灭了，一共用了 ${state.moves} 次。`, "success");
+                return;
+            }
+
+            if (litCount === state.size * state.size) {
+                setStatus("现在全部都亮着了，换个位置继续试试。", "hint");
                 return;
             }
 

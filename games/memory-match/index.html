@@ -227,6 +227,9 @@
             padding: 0;
             cursor: pointer;
             perspective: 960px;
+            -webkit-perspective: 960px;
+            -webkit-appearance: none;
+            appearance: none;
         }
 
         .memory-card:disabled {
@@ -238,12 +241,15 @@
             width: 100%;
             height: 100%;
             transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
             transition: transform 0.35s ease;
+            will-change: transform;
         }
 
         .memory-card.is-revealed .card-inner,
         .memory-card.is-matched .card-inner {
             transform: rotateY(180deg);
+            -webkit-transform: rotateY(180deg);
         }
 
         .card-face {
@@ -253,7 +259,10 @@
             display: grid;
             place-items: center;
             backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
             box-shadow: inset 0 0 0 1px rgba(34, 50, 56, 0.08);
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
         }
 
         .card-front {
@@ -267,13 +276,32 @@
         }
 
         .card-back {
-            background: #fffdf8;
-            transform: rotateY(180deg);
-            font-size: clamp(2rem, 8vw, 3.4rem);
+            background: linear-gradient(180deg, #f4d59b, #e8b768);
+            transform: rotateY(180deg) translateZ(1px);
+            -webkit-transform: rotateY(180deg) translateZ(1px);
+            overflow: hidden;
+        }
+
+        .card-back::before {
+            content: "";
+            position: absolute;
+            inset: 14%;
+            border-radius: 22px;
+            background: rgba(255, 252, 244, 0.76);
+            box-shadow: inset 0 0 0 1px rgba(34, 50, 56, 0.06);
+        }
+
+        .card-symbol {
+            position: relative;
+            z-index: 1;
+            font-size: clamp(2.8rem, 11vw, 4.5rem);
+            line-height: 1;
+            filter: saturate(1.08) contrast(1.02);
+            text-shadow: 0 2px 0 rgba(255, 255, 255, 0.25);
         }
 
         .memory-card.is-matched .card-back {
-            background: linear-gradient(180deg, #fff8eb, #f5ede0);
+            background: linear-gradient(180deg, #f6ddaa, #e7c277);
             box-shadow: inset 0 0 0 2px rgba(198, 122, 32, 0.18);
         }
 
@@ -378,8 +406,8 @@
                 font-size: 0.86rem;
             }
 
-            .card-back {
-                font-size: clamp(1.1rem, 3.5vh, 2.2rem);
+            .card-symbol {
+                font-size: clamp(2rem, 5.2vh, 3.1rem);
             }
         }
 
@@ -486,8 +514,13 @@
                 letter-spacing: 0;
             }
 
-            .card-back {
-                font-size: clamp(1rem, 5vw, 1.45rem);
+            .card-back::before {
+                inset: 12%;
+                border-radius: 16px;
+            }
+
+            .card-symbol {
+                font-size: clamp(2.2rem, 9vw, 3.2rem);
             }
         }
     </style>
@@ -565,6 +598,17 @@
         };
 
         const SYMBOL_POOL = ["🍎", "🍋", "🍇", "🍓", "🍒", "🥕", "🌽", "⭐", "🚗", "🧩", "🐳", "🦋", "🐸", "🚀", "🍉", "🎈"];
+        const CARD_BACKGROUNDS = [
+            "linear-gradient(180deg, #f4d59b, #e8b768)",
+            "linear-gradient(180deg, #d8ecb8, #9fcc69)",
+            "linear-gradient(180deg, #d8e4fb, #8ab0ef)",
+            "linear-gradient(180deg, #f6d1c8, #e89b87)",
+            "linear-gradient(180deg, #e7d9fb, #bf9ce8)",
+            "linear-gradient(180deg, #d4f0ee, #7ecbbf)",
+            "linear-gradient(180deg, #f8d7a5, #f0b96d)",
+            "linear-gradient(180deg, #f8d7df, #ea9cb1)"
+        ];
+
 
         const boardElement = document.getElementById("board");
         const difficultyElement = document.getElementById("difficulty");
@@ -605,17 +649,18 @@
                 {
                     id: `${symbolIndex}-a`,
                     symbol,
+                    tone: CARD_BACKGROUNDS[symbolIndex % CARD_BACKGROUNDS.length],
                     revealed: false,
                     matched: false
                 },
                 {
                     id: `${symbolIndex}-b`,
                     symbol,
+                    tone: CARD_BACKGROUNDS[symbolIndex % CARD_BACKGROUNDS.length],
                     revealed: false,
                     matched: false
                 }
             ]));
-
             return shuffleArray(cards);
         }
 
@@ -661,7 +706,12 @@
 
                 const back = document.createElement("div");
                 back.className = "card-face card-back";
-                back.textContent = card.symbol;
+                back.style.background = card.tone;
+
+                const symbol = document.createElement("span");
+                symbol.className = "card-symbol";
+                symbol.textContent = card.symbol;
+                back.appendChild(symbol);
 
                 inner.appendChild(front);
                 inner.appendChild(back);
