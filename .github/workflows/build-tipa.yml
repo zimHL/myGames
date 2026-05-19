@@ -19,6 +19,9 @@ jobs:
       - name: Install ldid
         run: brew install ldid
 
+      - name: Fix permissions
+        run: chmod +x ios/Scripts/*.sh
+
       - name: Build .app
         run: ios/Scripts/build.sh
 
