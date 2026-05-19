@@ -1,0 +1,36 @@
+name: Build MyGames .tipa
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install ldid
+        run: brew install ldid
+
+      - name: Build .app
+        run: ios/Scripts/build.sh
+
+      - name: Package .tipa
+        run: ios/Scripts/package.sh
+
+      - name: Publish Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="build-${{ github.run_number }}"
+          gh release create "$TAG" dist/MyGames.tipa \
+            --repo "${{ github.repository }}" \
+            --title "Build #${{ github.run_number }}" \
+            --notes "自动构建 [#${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
