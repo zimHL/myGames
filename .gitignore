@@ -16,3 +16,10 @@ logs/
 *.swp
 .claude/
 CLAUDE.md
+
+# Android
+android/.gradle/
+android/.idea/
+android/**/build/
+android/local.properties
+android/*.iml

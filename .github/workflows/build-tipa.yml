@@ -2,11 +2,6 @@ name: Build MyGames .tipa
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths-ignore:
-      - '**.md'
-      - '.gitignore'
 
 permissions:
   contents: write

@@ -5,6 +5,9 @@ class ViewController: UIViewController, WKNavigationDelegate {
 
     private var webView: WKWebView!
 
+    override var prefersStatusBarHidden: Bool { true }
+    override var prefersHomeIndicatorAutoHidden: Bool { true }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setupWebView()

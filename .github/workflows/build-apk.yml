@@ -1,0 +1,56 @@
+name: Build MyGames Android APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.4"
+
+      - name: Build debug APK
+        run: gradle -p android :app:assembleDebug
+
+      - name: Prepare artifact
+        run: |
+          mkdir -p dist
+          cp android/app/build/outputs/apk/debug/app-debug.apk dist/MyGames-android-debug.apk
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyGames-android-debug
+          path: dist/MyGames-android-debug.apk
+
+      - name: Publish Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="android-build-${{ github.run_number }}-${{ github.run_attempt }}"
+          gh release create "$TAG" dist/MyGames-android-debug.apk \
+            --repo "${{ github.repository }}" \
+            --title "Android APK #${{ github.run_number }}" \
+            --notes "自动构建 APK。构建记录：${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
