@@ -9,9 +9,6 @@ on:
       - "data/**"
       - "games/**"
       - "styles/**"
-      - "ios/**"
-      - "android/**"
-      - ".github/workflows/build-release.yml"
 
 permissions:
   contents: write

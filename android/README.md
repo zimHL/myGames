@@ -61,4 +61,4 @@ dist\MyGames-android-debug.apk
 
 - iOS 和 Android 共用同一套内容目录。
 - 后续新增游戏，只要继续放进根目录对应目录即可，两端都会一起打包。
-- push 到 `main` 后，会先构建 iOS，再构建 Android，最后统一发布到同一个 Release。
+- push 到 `main` 后，只要本次提交改了游戏内容目录，就会先构建 iOS，再构建 Android，最后统一发布到同一个 Release。

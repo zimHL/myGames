@@ -12,7 +12,7 @@
 ## 触发方式
 
 - 主工作流和两个备用工作流都支持手动 `workflow_dispatch`。
-- `build-release.yml` 会在 `main` 分支推送时触发，只要本次提交涉及 `index.html`、`data/`、`games/`、`styles/`、`ios/`、`android/` 或工作流文件本身。
+- `build-release.yml` 会在 `main` 分支推送时触发，只要本次提交涉及 `index.html`、`data/`、`games/`、`styles/`。
 - `build-tipa.yml` 和 `build-apk.yml` 现在只作为手动备用，不会在推送时自动触发。
 
 ## 发布结果
